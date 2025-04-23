@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42cd5292309eeb446af7bb7ce097a05e, type: 3}
+  m_Name: WolfData
+  m_EditorClassIdentifier: 
+  unitName: Wolf
+  unitSprite: {fileID: 1345897218, guid: d31d8e34f68101145b905cfbc9f44d53, type: 3}
+  maxMovePoints: 4
+  biomass: 3
+  isPredator: 1
+  isHerbivore: 0
+  isOmnivore: 0
+  team: 0
+  lifePoints: 10
+  unitPrefab: {fileID: 4012886052559146800, guid: 5c6029a70d917624cbb08b50dd0978dc, type: 3}
+  visionRange: 3
+  artwork: {fileID: 21300000, guid: 4b3e42b63f93db34fbc544c3dd839b61, type: 3}

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 88e11dfd53c040c409b132fc01d0d85a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - groundTilemap: {instanceID: 0}
+  - environmentTilemap: {instanceID: 0}
+  - obstacleTilemap: {instanceID: 0}
+  - unitPrefab: {fileID: 7913209052898807411, guid: 71a59e2aea0d8d341a8e25bd27edc3fe, type: 3}
+  - selectedUnit: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

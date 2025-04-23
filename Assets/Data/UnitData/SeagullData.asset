@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42cd5292309eeb446af7bb7ce097a05e, type: 3}
+  m_Name: SeagullData
+  m_EditorClassIdentifier: 
+  unitName: Seagull
+  unitSprite: {fileID: 1970770896, guid: d31d8e34f68101145b905cfbc9f44d53, type: 3}
+  maxMovePoints: 5
+  biomass: 1
+  isPredator: 0
+  isHerbivore: 0
+  isOmnivore: 1
+  team: 0
+  lifePoints: 10
+  unitPrefab: {fileID: 7851408890616844102, guid: 522d98b310c9c4d4288ff47648b1614b, type: 3}
+  visionRange: 3
+  artwork: {fileID: 21300000, guid: 7211cad6fa492e14dbb36ea6c8830033, type: 3}

@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 009cb4ce416d186469698182b50c26cd, type: 3}
+  m_Name: TileDataContainer
+  m_EditorClassIdentifier: 
+  allTileData:
+  - terrainName: Forest
+    sprites:
+    - {fileID: 1784626895, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 89109299, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1790144422, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1422579796, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -1504772562, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1584471471, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 6186569, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1784626895, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -99796613, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -549455336, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -677977116, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -751785088, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1126068701, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 473245444, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -1294977678, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -2133710817, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -1079682864, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1485645432, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 624616770, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 399281757, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    movementCost: 2
+    resources: 4
+  - terrainName: Mountain
+    sprites:
+    - {fileID: -768963123, guid: f1388a4ca6d6f2b48a4373dd7d29aca0, type: 3}
+    movementCost: 2
+    resources: 0
+  - terrainName: Plain
+    sprites:
+    - {fileID: -1941793609, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 2065878682, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 319309604, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -1355674785, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1561207560, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    movementCost: 0
+    resources: 3
+  - terrainName: Sea
+    sprites: []
+    movementCost: 0
+    resources: 0
+  - terrainName: Rivage
+    sprites: []
+    movementCost: 0
+    resources: 0
+  - terrainName: River
+    sprites: []
+    movementCost: 2
+    resources: 0
+  - terrainName: Desert
+    sprites:
+    - {fileID: 2099070798, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -502683028, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: -880477421, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    - {fileID: 1138815199, guid: 946a9f51530426e49a5ecfcb0966a3e6, type: 3}
+    movementCost: 0
+    resources: 0

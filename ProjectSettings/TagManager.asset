@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - DeckZone
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - Unit
+  - Water
+  - UI
+  - Ground
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: GroundLayer
+    uniqueID: 974272217
+    locked: 0
+  - name: EnvironnementLayer
+    uniqueID: 2533106189
+    locked: 0
+  - name: CombatUI
+    uniqueID: 2990484871
+    locked: 0
+  - name: UnitLayer
+    uniqueID: 3909871235
+    locked: 0
+  - name: UI
+    uniqueID: 1945352323
+    locked: 0
