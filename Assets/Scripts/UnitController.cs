@@ -5,58 +5,52 @@ using TMPro;
 
 public class UnitController : MonoBehaviour
 {
-    public UnitData unitData;           // Données de l'unité (nom, sprite, biomasse, lifePoints, etc.)
+    [Header("Data")]
+    public UnitData unitData;
+    public GameObject carcassPrefab;
+
+    [Header("State")]
     public Vector2Int position;
     public int movePoints;
     public bool isMoving = false;
+    public bool hasActed = false;
 
     [Header("Team Settings")]
-    public Team team = Team.Red;
-    public bool hasActed = false;
+    public Team team = Team.J1Team;
+
+    [Header("Stats")]
+    public int currentBiomass;
+    public int currentLifePoints;
+    public int currentStomach = 0;
+
+    [Header("UI")]
+    public TextMeshProUGUI lifePointsText;
 
     private GridManager gridManager;
     private SpriteRenderer spriteRenderer;
     private Animator animator;
 
-    // Pour les mécaniques internes (ex : valeur utilisée pour la carcasse)
-    public int currentBiomass;
-
-    // Nouveau champ pour les points de vie (qui déterminent la survie)
-    public int currentLifePoints;
-
-    // Champ UI pour afficher les Life Points (remplace l'ancien BiomassText)
-    public TextMeshProUGUI lifePointsText;
-
-    // Jauge d'estomac pour les herbivores (utilisée pour les interactions, si nécessaire)
-    public int currentStomach = 0; // Va de 0 à 3
-
-    // Prefab de carcasse instancié à la mort de l'unité
-    public GameObject carcassPrefab; // À assigner dans l'inspecteur
-
     void Awake()
     {
+        // Hérite du defaultTeam si défini
+        if (unitData != null)
+            team = unitData.defaultTeam;
+
+        // Récupère la GridManager
         gridManager = FindObjectOfType<GridManager>();
         if (gridManager == null)
-        {
             Debug.LogError("GridManager non trouvé !");
-            return;
-        }
-        // Mettre à jour position interne
+
+        // Calcule la position sur la grille et snap
         position = new Vector2Int(
             Mathf.RoundToInt(transform.position.x),
             Mathf.RoundToInt(transform.position.y)
         );
-        SnapToGrid();  // ← maintenant dès Awake(), avant tout autre script
+        SnapToGrid();
     }
 
     void Start()
     {
-        gridManager = FindObjectOfType<GridManager>();
-        if (gridManager == null)
-        {
-            Debug.LogError("❌ GridManager non trouvé !");
-            return;
-        }
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
@@ -67,238 +61,149 @@ public class UnitController : MonoBehaviour
             currentLifePoints = unitData.lifePoints;
         }
 
-        currentStomach = 0;
         UpdateLifePointsText();
-
-        position = new Vector2Int(
-            Mathf.RoundToInt(transform.position.x),
-            Mathf.RoundToInt(transform.position.y)
-        );
         SnapToGrid();
-
-        // ← Lignes de surlignage auto supprimées ici
-        // List<GridCell> reachable = gridManager.ComputeReachableTiles(this, position);
-        // gridManager.HighlightReachableTiles(reachable, gridManager.defaultHighlightColor);
     }
 
-
-    /// <summary>
-    /// Met à jour le champ UI affichant les Life Points.
-    /// </summary>
     private void UpdateLifePointsText()
     {
         if (lifePointsText != null)
-        {
             lifePointsText.text = currentLifePoints.ToString();
-        }
     }
 
-    /// <summary>
-    /// Applique des dégâts en soustrayant le montant aux Life Points.
-    /// </summary>
     public void TakeDamage(int damage)
     {
         currentLifePoints -= damage;
-        Debug.Log(unitData.unitName + " subit " + damage + " dégâts. PV restants = " + currentLifePoints);
         UpdateLifePointsText();
 
         if (currentLifePoints <= 0)
-        {
             Die();
-        }
     }
 
-    /// <summary>
-    /// Méthode appelée lorsque l'unité meurt.
-    /// Instancie une carcasse à la position de la mort avant de détruire l'unité.
-    /// </summary>
     private void Die()
     {
-        Debug.Log("💀 " + unitData.unitName + " est mort !");
-
-        // Calculer la position centrée sur la cellule (à partir de la groundTilemap)
+        // Instancie une carcasse
         Vector3 spawnPos = transform.position;
-        if (gridManager != null && gridManager.groundTilemap != null)
+        if (gridManager?.groundTilemap != null)
         {
-            spawnPos = gridManager.groundTilemap.GetCellCenterWorld(new Vector3Int(position.x, position.y, 0));
+            spawnPos = gridManager.groundTilemap
+                .GetCellCenterWorld(new Vector3Int(position.x, position.y, 0));
         }
 
-        // Instancier une carcasse à la position calculée
         if (carcassPrefab != null)
         {
-            GameObject carcassObject = Instantiate(carcassPrefab, spawnPos, Quaternion.identity);
-            Carcass carcass = carcassObject.GetComponent<Carcass>();
-            if (carcass != null)
+            GameObject c = Instantiate(carcassPrefab, spawnPos, Quaternion.identity);
+            var carc = c.GetComponent<Carcass>();
+            if (carc != null)
             {
-                // Ici, la carcasse reçoit la biomasse de l'unité au moment de sa mort.
-                // Ainsi, si l'unité avait 6 de biomasse, alors fillValue et maxFillValue seront tous deux égaux à 6.
-                carcass.fillValue = currentBiomass;
-                carcass.maxFillValue = currentBiomass;
+                carc.fillValue = currentBiomass;
+                carc.maxFillValue = currentBiomass;
             }
-            else
-            {
-                Debug.LogWarning("Le prefab de carcasse n'a pas de script Carcass attaché !");
-            }
-            Debug.Log("Carcasse instanciée à : " + spawnPos);
         }
 
         Destroy(gameObject);
     }
 
-
-    /// <summary>
-    /// Méthode utilisée pour les herbivores afin de consommer une ressource sur la cellule.
-    /// </summary>
-    public void EatResource()
-    {
-        if (unitData.isHerbivore)
-        {
-            currentStomach++;
-            Debug.Log(unitData.unitName + " mange : jauge d'estomac = " + currentStomach + "/3");
-
-            // Si la jauge atteint 3, augmenter la biomasse et réinitialiser l'estomac
-            if (currentStomach >= 3)
-            {
-                IncreaseBiomass(1);
-                currentStomach = 0;
-                Debug.Log(unitData.unitName + " a rempli son estomac et gagne 1 biomasse !");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Augmente la biomasse de l'unité (utilisée pour d'autres mécaniques) et affiche un message.
-    /// </summary>
-    public void IncreaseBiomass(int amount)
-    {
-        currentBiomass += amount;
-        Debug.Log(unitData.unitName + " augmente sa biomasse de " + amount + ". Nouvelle biomasse: " + currentBiomass);
-    }
-
-    /// <summary>
-    /// Déplace l'unité vers la position cible, en vérifiant les obstacles.
-    /// Permet également de sélectionner l'unité si la position cible est la même que celle actuelle.
-    /// </summary>
     public void MoveTo(Vector2Int targetPosition)
     {
-        // Si l'unité est déjà sur la case cible, on affiche simplement le panneau d'action
-        if (targetPosition == this.position)
+        if (hasActed || isMoving || gridManager == null)
+            return;
+
+        // Si on reclique sur la même case, affiche le menu d'action
+        if (targetPosition == position)
         {
-            if (gridManager.actionPanel != null)
-            {
-                gridManager.actionPanel.ShowPanel(this);
-                Debug.Log("UnitActionPanel affiché pour l'unité à sa propre position.");
-            }
+            gridManager.actionPanel?.ShowPanel(this);
             return;
         }
 
-        if (hasActed)
-        {
-            Debug.Log("❌ Unité a déjà agi et ne peut plus bouger.");
+        GridCell targetCell = gridManager.GetCell(targetPosition);
+        if (targetCell == null)
             return;
-        }
-        if (isMoving || gridManager.GetCell(targetPosition) == null)
-        {
-            Debug.Log("❌ Déplacement impossible vers : " + targetPosition);
-            return;
-        }
 
-        UnitController occupant = gridManager.GetUnitAtPosition(targetPosition);
-        Carcass carcassAtTarget = gridManager.GetCarcassAtPosition(targetPosition);
-        if ((occupant != null && occupant != this) || (carcassAtTarget != null))
-        {
-            Debug.Log("❌ Case occupée par " + (occupant != null ? occupant.unitData.unitName : "une carcasse"));
+        // Vérifie s'il y a un obstacle ou une unité ennemie
+        var occupant = gridManager.GetUnitAtPosition(targetPosition);
+        if (occupant != null && !IsAllied(occupant))
             return;
-        }
 
-        Debug.Log("🚀 Déplacement confirmé vers : " + targetPosition);
         List<GridCell> path = gridManager.FindPath(this, position, targetPosition);
-        if (path != null && path.Count > 0)
-        {
-            Debug.Log("✅ Chemin trouvé, déplacement en cours... Longueur : " + path.Count);
-            gridManager.ClearHighlightedTiles();
-            StartCoroutine(MoveAlongPath(path));
-        }
-        else
-        {
-            Debug.Log("❌ Aucun chemin valide trouvé !");
-        }
+        if (path == null || path.Count == 0)
+            return;
+
+        // Lance la coroutine de déplacement
+        StartCoroutine(MoveAlongPath(path));
     }
 
-    IEnumerator MoveAlongPath(List<GridCell> path)
+    private IEnumerator MoveAlongPath(List<GridCell> path)
     {
-        Debug.Log("🚶 Déplacement en cours...");
         isMoving = true;
-        if (path == null || path.Count == 0)
+
+        foreach (var cell in path)
         {
-            Debug.LogError("❌ Chemin vide !");
-            isMoving = false;
-            yield break;
-        }
-        foreach (GridCell cell in path)
-        {
-            Vector3 targetPos = gridManager.groundTilemap.GetCellCenterWorld((Vector3Int)cell.position);
-            while (Vector3.Distance(transform.position, targetPos) > 0.01f)
+            Vector3 targetWorld = gridManager.groundTilemap
+                .GetCellCenterWorld(new Vector3Int(cell.position.x, cell.position.y, 0));
+            while (Vector3.Distance(transform.position, targetWorld) > 0.01f)
             {
-                transform.position = Vector3.MoveTowards(transform.position, targetPos, 2f * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(
+                    transform.position, targetWorld, 2f * Time.deltaTime);
                 yield return null;
             }
             position = cell.position;
             SnapToGrid();
         }
+
         isMoving = false;
-        Debug.Log("✅ Déplacement terminé !");
-
-        if (gridManager.actionPanel != null)
-        {
-            gridManager.actionPanel.ShowPanel(this);
-            Debug.Log("UnitActionPanel affiché via référence directe.");
-        }
-        else
-        {
-            Debug.Log("Pas de panneau d'action assigné dans GridManager !");
-            gridManager.selectedUnit = null;
-            gridManager.ClearHighlightedTiles();
-        }
+        gridManager.actionPanel?.ShowPanel(this);
     }
 
-    private void SnapToGrid()
+    public void EatResource()
     {
-        Vector3 snappedPosition = gridManager.groundTilemap.GetCellCenterWorld((Vector3Int)position);
-        transform.position = snappedPosition;
+        // Herbivores et omnivores nourrissent leur estomac
+        if (unitData.isHerbivore || unitData.isOmnivore)
+        {
+            currentStomach++;
+            if (currentStomach >= 3)
+            {
+                IncreaseBiomass(1);
+                currentStomach = 0;
+            }
+        }
     }
 
-    /// <summary>
-    /// Marque l'unité comme ayant agi, change sa couleur, et nettoie la sélection.
-    /// </summary>
+    public void IncreaseBiomass(int amount)
+    {
+        currentBiomass += amount;
+    }
+
     public void MarkAsWaiting()
     {
         hasActed = true;
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.color = Color.gray;
-        }
-        Debug.Log(unitData.unitName + " est maintenant épuisé (attente).");
+        spriteRenderer.color = Color.gray;
         gridManager.selectedUnit = null;
         gridManager.ClearHighlightedTiles();
     }
 
     public void ResetVisuals()
     {
+        hasActed = false;
         if (spriteRenderer != null)
-        {
             spriteRenderer.color = Color.white;
-        }
     }
 
-    /// <summary>
-    /// Indique si cette unité est alliée avec une autre, en comparant leurs équipes.
-    /// </summary>
     public bool IsAllied(UnitController other)
     {
         return this.team == other.team;
     }
+
+    private void SnapToGrid()
+    {
+        if (gridManager?.groundTilemap != null)
+        {
+            transform.position = gridManager.groundTilemap
+                .GetCellCenterWorld(new Vector3Int(position.x, position.y, 0));
+        }
+    }
 }
+
 
 
 

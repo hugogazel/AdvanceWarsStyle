@@ -636,9 +636,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player1Deck: []
   player2Deck: []
-  deckSpawnZoneRed: {fileID: 0}
-  deckSpawnZoneBlue: {fileID: 0}
-  cardPrefab: {fileID: 0}
+  unitCardPanel: {fileID: 598262803}
+  cardPrefab: {fileID: 4502960835598443711, guid: 65c2c181077fd734b987ed688b3c8599, type: 3}
+  playerTurnText: {fileID: 382888166}
+  playerTurnDisplayTime: 2
   turnEndPanel: {fileID: 680923648}
   currentTeam: 0
 --- !u!4 &272510612
@@ -715,7 +716,7 @@ GameObject:
   - component: {fileID: 382888167}
   - component: {fileID: 382888166}
   m_Layer: 3
-  m_Name: TemporaryDayText
+  m_Name: PlayerTurnText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -737,8 +738,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 15.778, y: 108}
+  m_SizeDelta: {x: 322.76, y: 100.969}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &382888166
 MonoBehaviour:
@@ -794,8 +795,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 1
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -5236,7 +5237,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 272510611}
         m_TargetAssemblyTypeName: TurnManager, Assembly-CSharp
-        m_MethodName: EndTurn
+        m_MethodName: OnConfirmEndTurn
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -8678,7 +8679,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 272510611}
         m_TargetAssemblyTypeName: TurnManager, Assembly-CSharp
-        m_MethodName: HideTurnEndPanel
+        m_MethodName: OnCancelEndTurn
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

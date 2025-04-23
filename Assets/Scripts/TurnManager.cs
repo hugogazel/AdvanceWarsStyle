@@ -1,91 +1,130 @@
-﻿// TurnManager.cs
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class TurnManager : MonoBehaviour
 {
-    // 1) Singleton
     public static TurnManager Instance { get; private set; }
 
-    [Header("Decks")]
-    public List<UnitData> player1Deck;      // À remplir dans l’inspecteur (les UnitData de J1)
-    public List<UnitData> player2Deck;      // À remplir dans l’inspecteur (les UnitData de J2)
+    [Header("Decks (GameManager)")]
+    public List<UnitData> player1Deck;
+    public List<UnitData> player2Deck;
 
-    [Header("Zones UI")]
-    public Transform deckSpawnZoneRed;      // Parent pour les cartes Red (drag & drop dans l’éditeur)
-    public Transform deckSpawnZoneBlue;     // Parent pour les cartes Blue
+    [Header("Hand UI")]
+    public Transform unitCardPanel;
+    public GameObject cardPrefab;
 
-    [Header("Prefabs")]
-    public GameObject cardPrefab;           // Votre prefab de carte UI (UnitCardUI)
+    [Header("Notification de tour")]
+    [Tooltip("Simple TextMeshProUGUI pour 'J1 Turn' / 'J2 Turn'")]
+    public TextMeshProUGUI playerTurnText;
+    [Tooltip("Durée d'affichage du texte en secondes")]
+    public float playerTurnDisplayTime = 2f;
 
-    [Header("UI Panels")]
-    public GameObject turnEndPanel;         // Le panel « Fin de tour » à activer
-                                            // (drag & drop depuis la hiérarchie)
+    [Header("Panel de fin de tour")]
+    public GameObject turnEndPanel;
 
     [Header("Tour courant")]
-    public Team currentTeam = Team.Red;
+    public Team currentTeam = Team.J1Team;
 
     private void Awake()
     {
-        // Singleton pattern
         if (Instance != null && Instance != this)
-        {
             Destroy(gameObject);
-            return;
+        else
+            Instance = this;
+    }
+
+    private void Start()
+    {
+        // Charger les decks
+        player1Deck = GameManager.Instance.player1Deck;
+        player2Deck = GameManager.Instance.player2Deck;
+
+        // Équipe de départ
+        currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
+            ? Team.J1Team
+            : Team.J2Team;
+
+        // Affichage initial
+        ShowPlayerHand();
+        ShowPlayerTurnText();
+    }
+
+    private void ShowPlayerHand()
+    {
+        foreach (Transform c in unitCardPanel)
+            Destroy(c.gameObject);
+
+        var deck = (currentTeam == Team.J1Team) ? player1Deck : player2Deck;
+        foreach (var data in deck)
+        {
+            var go = Instantiate(cardPrefab, unitCardPanel);
+            go.GetComponent<UnitCardUI>()?.Initialize(data);
         }
-        Instance = this;
-        // (Optionnel) DontDestroyOnLoad(gameObject);
     }
 
-    /// <summary>
-    /// Lance la boucle de jeu (à appeler après que J2 ait validé son deck).
-    /// </summary>
-    public void StartGameLoop()
+    public void ShowPlayerTurnText()
     {
-        currentTeam = Team.Red;
-        PopulateHandFor(currentTeam);
+        if (playerTurnText == null) return;
+
+        playerTurnText.text = (currentTeam == Team.J1Team)
+            ? "J1 Turn"
+            : "J2 Turn";
+        playerTurnText.gameObject.SetActive(true);
+        StartCoroutine(HidePlayerTurnTextAfterDelay());
     }
 
-    /// <summary>
-    /// Termine le tour et passe à l’autre joueur.
-    /// </summary>
-    public void EndTurn()
+    private IEnumerator HidePlayerTurnTextAfterDelay()
     {
-        currentTeam = (currentTeam == Team.Red) ? Team.Blue : Team.Red;
-        PopulateHandFor(currentTeam);
+        yield return new WaitForSeconds(playerTurnDisplayTime);
+        playerTurnText.gameObject.SetActive(false);
     }
 
     /// <summary>
-    /// Affiche le panel « Fin de tour ».
+    /// Ouvre le panel de fin de tour (sans changer d’équipe).
     /// </summary>
-    public void ShowTurnEndPanel()
+    public void ShowEndTurnPanelOnly()
     {
         if (turnEndPanel != null)
             turnEndPanel.SetActive(true);
     }
 
     /// <summary>
-    /// (Ré)instancie les cartes de la main pour l’équipe donnée.
+    /// Appelé par le bouton "Return" du TurnEndPanel.
     /// </summary>
-    private void PopulateHandFor(Team t)
+    public void OnCancelEndTurn()
     {
-        var deck = (t == Team.Red) ? player1Deck : player2Deck;
-        var zone = (t == Team.Red) ? deckSpawnZoneRed : deckSpawnZoneBlue;
+        // Ne change pas d'équipe, ferme juste le panel
+        turnEndPanel.SetActive(false);
+    }
 
-        // Vider la zone
-        foreach (Transform child in zone)
-            Destroy(child.gameObject);
+    /// <summary>
+    /// Appelé par le bouton "End Turn" du TurnEndPanel.
+    /// Change d’équipe, met à jour l’UI, puis ferme le panel.
+    /// </summary>
+    public void OnConfirmEndTurn()
+    {
+        // Change d’équipe dans GameManager
+        GameManager.Instance.EndTurn();
 
-        // Ré-instancier chaque carte du deck
-        foreach (var data in deck)
-        {
-            GameObject cardObj = Instantiate(cardPrefab, zone);
-            var ui = cardObj.GetComponent<UnitCardUI>();
-            if (ui != null)
-                ui.Initialize(data);
-        }
+        // Met à jour localement
+        currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
+            ? Team.J1Team
+            : Team.J2Team;
+
+        // Rafraîchit l’UI
+        ShowPlayerHand();
+        ShowPlayerTurnText();
+
+        turnEndPanel.SetActive(false);
     }
 }
+
+
+
+
+
 
 
 
