@@ -37,7 +37,7 @@ public class TurnManager : MonoBehaviour
 
     private void Start()
     {
-        // Charger les decks
+        // Charge les decks
         player1Deck = GameManager.Instance.player1Deck;
         player2Deck = GameManager.Instance.player2Deck;
 
@@ -46,7 +46,6 @@ public class TurnManager : MonoBehaviour
             ? Team.J1Team
             : Team.J2Team;
 
-        // Affichage initial
         ShowPlayerHand();
         ShowPlayerTurnText();
     }
@@ -91,35 +90,35 @@ public class TurnManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Appelé par le bouton "Return" du TurnEndPanel.
+    /// Bouton “Return” : ferme le panel sans changer d’équipe.
     /// </summary>
     public void OnCancelEndTurn()
     {
-        // Ne change pas d'équipe, ferme juste le panel
         turnEndPanel.SetActive(false);
     }
 
     /// <summary>
-    /// Appelé par le bouton "End Turn" du TurnEndPanel.
-    /// Change d’équipe, met à jour l’UI, puis ferme le panel.
+    /// Bouton “End Turn” : bascule d’équipe, rafraîchit UI, ferme le panel.
     /// </summary>
     public void OnConfirmEndTurn()
     {
-        // Change d’équipe dans GameManager
+        // 1) Change l’équipe dans GameManager
         GameManager.Instance.EndTurn();
 
-        // Met à jour localement
+        // 2) Met à jour notre enum local
         currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
             ? Team.J1Team
             : Team.J2Team;
 
-        // Rafraîchit l’UI
+        // 3) Rafraîchit main et notif
         ShowPlayerHand();
         ShowPlayerTurnText();
 
+        // 4) Ferme le panel
         turnEndPanel.SetActive(false);
     }
 }
+
 
 
 

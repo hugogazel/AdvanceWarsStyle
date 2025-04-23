@@ -133,18 +133,27 @@ public class UnitController : MonoBehaviour
         StartCoroutine(MoveAlongPath(path));
     }
 
-    private IEnumerator MoveAlongPath(List<GridCell> path)
+    IEnumerator MoveAlongPath(List<GridCell> path)
     {
         isMoving = true;
 
-        foreach (var cell in path)
+        // <-- NOUVEAU : dès le début du déplacement on nettoie
+        gridManager.ClearHighlightedTiles();
+        FindObjectOfType<ArrowPreviewManager>()?.ClearPathPreview();
+
+        if (path == null || path.Count == 0)
         {
-            Vector3 targetWorld = gridManager.groundTilemap
-                .GetCellCenterWorld(new Vector3Int(cell.position.x, cell.position.y, 0));
-            while (Vector3.Distance(transform.position, targetWorld) > 0.01f)
+            Debug.LogError("❌ Chemin vide !");
+            isMoving = false;
+            yield break;
+        }
+
+        foreach (GridCell cell in path)
+        {
+            Vector3 targetPos = gridManager.groundTilemap.GetCellCenterWorld((Vector3Int)cell.position);
+            while (Vector3.Distance(transform.position, targetPos) > 0.01f)
             {
-                transform.position = Vector3.MoveTowards(
-                    transform.position, targetWorld, 2f * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, targetPos, 2f * Time.deltaTime);
                 yield return null;
             }
             position = cell.position;
@@ -152,8 +161,19 @@ public class UnitController : MonoBehaviour
         }
 
         isMoving = false;
-        gridManager.actionPanel?.ShowPanel(this);
+
+        // Affiche ensuite le panneau d'actions
+        if (gridManager.actionPanel != null)
+        {
+            gridManager.actionPanel.ShowPanel(this);
+        }
+        else
+        {
+            gridManager.selectedUnit = null;
+        }
     }
+
+
 
     public void EatResource()
     {
