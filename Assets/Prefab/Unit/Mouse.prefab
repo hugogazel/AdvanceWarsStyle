@@ -173,16 +173,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitData: {fileID: 11400000, guid: 515a6f84e2277e74b8bd2aec55557795, type: 2}
+  carcassPrefab: {fileID: 6166163441733722083, guid: 86006024c636a604d8f1461b03fcfd4f, type: 3}
   position: {x: 0, y: 0}
   movePoints: 3
   isMoving: 0
-  team: 1
   hasActed: 0
+  team: 1
   currentBiomass: 0
   currentLifePoints: 0
-  lifePointsText: {fileID: 2967490126869518606}
   currentStomach: 0
-  carcassPrefab: {fileID: 6166163441733722083, guid: 86006024c636a604d8f1461b03fcfd4f, type: 3}
+  lifePointsText: {fileID: 2967490126869518606}
 --- !u!1 &3751572114536696719
 GameObject:
   m_ObjectHideFlags: 0
@@ -248,7 +248,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 3
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}

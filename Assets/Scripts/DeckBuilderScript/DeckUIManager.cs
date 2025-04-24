@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Linq;
 using System.Collections.Generic;
+using TMPro;  // nécessaire pour TextMeshProUGUI
 
 public class DeckUIManager : MonoBehaviour
 {
@@ -24,6 +25,9 @@ public class DeckUIManager : MonoBehaviour
     [Header("UI")]
     public Button startGameButton;
 
+    [Header("Player Label")]
+    public TextMeshProUGUI playerNameText;          // Ton TextMeshProUGUI
+
     private void Awake()
     {
         // Singleton
@@ -33,31 +37,42 @@ public class DeckUIManager : MonoBehaviour
             return;
         }
         Instance = this;
-        // On retire la persistence pour que les références aux containers soient remises à jour
-        // DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()
     {
-        // Si on recharge la scène pour le joueur 2, on vide l'ancienne sélection
+        // Si on recharge la scène pour le joueur 2, on vide l'ancienne sélection
         if (GameManager.Instance.deckBuilderPlayer == 2)
             selectedDeckCards.Clear();
     }
 
     private void Start()
     {
-        // Peupler la liste des cartes disponibles
+        // 1) Initialisation du label "J1" / "J2"
+        if (playerNameText == null)
+        {
+            Debug.LogError("[DeckUIManager] playerNameText n'est pas assigné !");
+        }
+        else
+        {
+            int p = GameManager.Instance.deckBuilderPlayer;
+            playerNameText.text = (p == 1) ? "J1" : "J2";
+            playerNameText.color = Color.white;
+            playerNameText.gameObject.SetActive(true);
+        }
+
+        // 2) Peupler la liste des cartes disponibles
         PopulateAvailableCards();
 
-        // Vider l'affichage du deck (pour ne pas voir les cartes de J1)
+        // 3) Vider l'affichage du deck (pour ne pas voir les cartes déjà sélectionnées)
         ClearDeckPanel();
 
-        // Désactiver le bouton tant que le deck n'est pas plein
+        // 4) Désactiver le bouton tant que le deck n'est pas complet
         if (startGameButton != null)
             startGameButton.interactable = false;
     }
 
-    void ClearDeckPanel()
+    private void ClearDeckPanel()
     {
         foreach (Transform child in deckPanelContainer)
             Destroy(child.gameObject);
@@ -125,6 +140,7 @@ public class DeckUIManager : MonoBehaviour
         }
     }
 }
+
 
 
 

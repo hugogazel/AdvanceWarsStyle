@@ -37,7 +37,7 @@ public class TurnManager : MonoBehaviour
 
     private void Start()
     {
-        // Charge les decks
+        // Charger les decks
         player1Deck = GameManager.Instance.player1Deck;
         player2Deck = GameManager.Instance.player2Deck;
 
@@ -46,7 +46,9 @@ public class TurnManager : MonoBehaviour
             ? Team.J1Team
             : Team.J2Team;
 
+        // Affichage initial et activation des unités du joueur de départ
         ShowPlayerHand();
+        ResetUnitsForCurrentTeam();
         ShowPlayerTurnText();
     }
 
@@ -90,7 +92,7 @@ public class TurnManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Bouton “Return” : ferme le panel sans changer d’équipe.
+    /// Appelé par le bouton "Return" du TurnEndPanel.
     /// </summary>
     public void OnCancelEndTurn()
     {
@@ -98,24 +100,39 @@ public class TurnManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Bouton “End Turn” : bascule d’équipe, rafraîchit UI, ferme le panel.
+    /// Appelé par le bouton "End Turn" du TurnEndPanel.
+    /// Change d’équipe, met à jour l’UI, puis ferme le panel.
     /// </summary>
     public void OnConfirmEndTurn()
     {
-        // 1) Change l’équipe dans GameManager
+        // Change d’équipe dans GameManager
         GameManager.Instance.EndTurn();
 
-        // 2) Met à jour notre enum local
+        // Met à jour localement
         currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
             ? Team.J1Team
             : Team.J2Team;
 
-        // 3) Rafraîchit main et notif
+        // Rafraîchit l’UI
         ShowPlayerHand();
+        // Réactive (dés-grise) toutes les unités de l’équipe active
+        ResetUnitsForCurrentTeam();
         ShowPlayerTurnText();
 
-        // 4) Ferme le panel
         turnEndPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Parcourt tous les UnitController et réinitialise le visuel
+    /// des unités dont c'est le tour.
+    /// </summary>
+    private void ResetUnitsForCurrentTeam()
+    {
+        foreach (var unit in FindObjectsOfType<UnitController>())
+        {
+            if (unit.team == currentTeam)
+                unit.ResetVisuals();
+        }
     }
 }
 

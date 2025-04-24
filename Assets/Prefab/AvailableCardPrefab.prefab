@@ -345,9 +345,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2634917d0593b71409fbea0bef44181e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundLayerMask2D:
-    serializedVersion: 2
-    m_Bits: 64
+  unitLayerName: Unit
 --- !u!114 &9028112529843871432
 MonoBehaviour:
   m_ObjectHideFlags: 0

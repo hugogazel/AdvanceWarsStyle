@@ -431,13 +431,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitData: {fileID: 11400000, guid: f3d4311760fdc764fad5f3eeae761ac6, type: 2}
+  carcassPrefab: {fileID: 6166163441733722083, guid: 86006024c636a604d8f1461b03fcfd4f, type: 3}
   position: {x: 0, y: 0}
   movePoints: 2
   isMoving: 0
-  team: 0
   hasActed: 0
+  team: 0
   currentBiomass: 0
   currentLifePoints: 0
-  lifePointsText: {fileID: 0}
   currentStomach: 0
-  carcassPrefab: {fileID: 0}
+  lifePointsText: {fileID: 0}

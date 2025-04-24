@@ -167,7 +167,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 3
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
@@ -176,8 +176,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4292589906
-  m_fontColor: {r: 0.31990921, g: 0.7260238, b: 0.8584906, a: 1}
+    rgba: 4292402076
+  m_fontColor: {r: 0.6114721, g: 0.8584906, b: 0.84521556, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -194,8 +194,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -431,13 +431,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitData: {fileID: 11400000, guid: 96c19868872c67649baf97d368379791, type: 2}
+  carcassPrefab: {fileID: 0}
   position: {x: 0, y: 0}
   movePoints: 3
   isMoving: 0
-  team: 0
   hasActed: 0
+  team: 0
   currentBiomass: 0
   currentLifePoints: 0
-  lifePointsText: {fileID: 0}
   currentStomach: 0
-  carcassPrefab: {fileID: 0}
+  lifePointsText: {fileID: 0}

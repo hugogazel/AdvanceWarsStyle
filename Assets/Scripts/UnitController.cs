@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.EventSystems;
 
 public class UnitController : MonoBehaviour
 {
@@ -221,6 +222,19 @@ public class UnitController : MonoBehaviour
             transform.position = gridManager.groundTilemap
                 .GetCellCenterWorld(new Vector3Int(position.x, position.y, 0));
         }
+    }
+
+    private void OnMouseDown()
+    {
+        // Ne pas sélectionner si ce n’est pas son tour ou si l’unité a déjà agi
+        if (team != TurnManager.Instance.currentTeam || hasActed)
+            return;
+
+        // Sélectionne cette unité et affiche ses tuiles de déplacement
+        GridManager gm = FindObjectOfType<GridManager>();
+        gm.selectedUnit = this;
+        List<GridCell> tiles = gm.ComputeReachableTiles(this, position);
+        gm.HighlightReachableTiles(tiles, gm.defaultHighlightColor);
     }
 }
 
