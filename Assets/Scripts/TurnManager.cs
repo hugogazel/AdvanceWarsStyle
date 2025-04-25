@@ -16,9 +16,7 @@ public class TurnManager : MonoBehaviour
     public GameObject cardPrefab;
 
     [Header("Notification de tour")]
-    [Tooltip("Simple TextMeshProUGUI pour 'J1 Turn' / 'J2 Turn'")]
     public TextMeshProUGUI playerTurnText;
-    [Tooltip("Durée d'affichage du texte en secondes")]
     public float playerTurnDisplayTime = 2f;
 
     [Header("Panel de fin de tour")]
@@ -27,29 +25,38 @@ public class TurnManager : MonoBehaviour
     [Header("Tour courant")]
     public Team currentTeam = Team.J1Team;
 
+    [HideInInspector]
+    public bool hasDeployedThisTurn = false;
+
+    // ← Nouveaux flags pour le free-drop unique
+    [HideInInspector] public bool j1FreeDropUsed = false;
+    [HideInInspector] public bool j2FreeDropUsed = false;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
             Destroy(gameObject);
         else
             Instance = this;
+
+        // On démarre avec aucun free-drop consommé
+        j1FreeDropUsed = false;
+        j2FreeDropUsed = false;
     }
 
     private void Start()
     {
-        // Charger les decks
         player1Deck = GameManager.Instance.player1Deck;
         player2Deck = GameManager.Instance.player2Deck;
-
-        // Équipe de départ
         currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
             ? Team.J1Team
             : Team.J2Team;
 
-        // Affichage initial et activation des unités du joueur de départ
         ShowPlayerHand();
         ResetUnitsForCurrentTeam();
         ShowPlayerTurnText();
+
+        hasDeployedThisTurn = false;
     }
 
     private void ShowPlayerHand()
@@ -59,19 +66,13 @@ public class TurnManager : MonoBehaviour
 
         var deck = (currentTeam == Team.J1Team) ? player1Deck : player2Deck;
         foreach (var data in deck)
-        {
-            var go = Instantiate(cardPrefab, unitCardPanel);
-            go.GetComponent<UnitCardUI>()?.Initialize(data);
-        }
+            Instantiate(cardPrefab, unitCardPanel).GetComponent<UnitCardUI>().Initialize(data);
     }
 
     public void ShowPlayerTurnText()
     {
         if (playerTurnText == null) return;
-
-        playerTurnText.text = (currentTeam == Team.J1Team)
-            ? "J1 Turn"
-            : "J2 Turn";
+        playerTurnText.text = currentTeam == Team.J1Team ? "J1 Turn" : "J2 Turn";
         playerTurnText.gameObject.SetActive(true);
         StartCoroutine(HidePlayerTurnTextAfterDelay());
     }
@@ -82,57 +83,36 @@ public class TurnManager : MonoBehaviour
         playerTurnText.gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// Ouvre le panel de fin de tour (sans changer d’équipe).
-    /// </summary>
     public void ShowEndTurnPanelOnly()
     {
-        if (turnEndPanel != null)
-            turnEndPanel.SetActive(true);
+        turnEndPanel?.SetActive(true);
     }
 
-    /// <summary>
-    /// Appelé par le bouton "Return" du TurnEndPanel.
-    /// </summary>
     public void OnCancelEndTurn()
     {
-        turnEndPanel.SetActive(false);
+        turnEndPanel?.SetActive(false);
     }
 
-    /// <summary>
-    /// Appelé par le bouton "End Turn" du TurnEndPanel.
-    /// Change d’équipe, met à jour l’UI, puis ferme le panel.
-    /// </summary>
     public void OnConfirmEndTurn()
     {
-        // Change d’équipe dans GameManager
         GameManager.Instance.EndTurn();
-
-        // Met à jour localement
         currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
             ? Team.J1Team
             : Team.J2Team;
 
-        // Rafraîchit l’UI
-        ShowPlayerHand();
-        // Réactive (dés-grise) toutes les unités de l’équipe active
+        hasDeployedThisTurn = false;
         ResetUnitsForCurrentTeam();
+        ShowPlayerHand();
         ShowPlayerTurnText();
 
-        turnEndPanel.SetActive(false);
+        turnEndPanel?.SetActive(false);
     }
 
-    /// <summary>
-    /// Parcourt tous les UnitController et réinitialise le visuel
-    /// des unités dont c'est le tour.
-    /// </summary>
     private void ResetUnitsForCurrentTeam()
     {
         foreach (var unit in FindObjectsOfType<UnitController>())
-        {
             if (unit.team == currentTeam)
                 unit.ResetVisuals();
-        }
     }
 }
 

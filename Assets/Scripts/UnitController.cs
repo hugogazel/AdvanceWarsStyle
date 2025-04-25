@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using UnityEngine.EventSystems;
 
 public class UnitController : MonoBehaviour
 {
@@ -16,7 +15,7 @@ public class UnitController : MonoBehaviour
     public bool isMoving = false;
     public bool hasActed = false;
 
-    [Header("Team Settings")]
+    [Header("Team")]
     public Team team = Team.J1Team;
 
     [Header("Stats")]
@@ -33,36 +32,34 @@ public class UnitController : MonoBehaviour
 
     void Awake()
     {
-        // Hérite du defaultTeam si défini
-        if (unitData != null)
-            team = unitData.defaultTeam;
+        if (lifePointsText == null)
+            lifePointsText = GetComponentInChildren<TextMeshProUGUI>();
 
-        // Récupère la GridManager
         gridManager = FindObjectOfType<GridManager>();
-        if (gridManager == null)
-            Debug.LogError("GridManager non trouvé !");
-
-        // Calcule la position sur la grille et snap
-        position = new Vector2Int(
-            Mathf.RoundToInt(transform.position.x),
-            Mathf.RoundToInt(transform.position.y)
-        );
-        SnapToGrid();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
     }
 
     void Start()
     {
-        animator = GetComponent<Animator>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-
         if (unitData != null)
         {
             movePoints = unitData.maxMovePoints;
             currentBiomass = unitData.biomass;
             currentLifePoints = unitData.lifePoints;
         }
+        else
+        {
+            currentLifePoints = 0;
+            Debug.LogWarning($"[{name}] unitData non assigné !");
+        }
 
-        UpdateLifePointsText();
+        if (lifePointsText != null)
+        {
+            lifePointsText.gameObject.SetActive(true);
+            UpdateLifePointsText();
+        }
+
         SnapToGrid();
     }
 
@@ -72,28 +69,23 @@ public class UnitController : MonoBehaviour
             lifePointsText.text = currentLifePoints.ToString();
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int dmg)
     {
-        currentLifePoints -= damage;
+        currentLifePoints -= dmg;
         UpdateLifePointsText();
-
-        if (currentLifePoints <= 0)
-            Die();
+        if (currentLifePoints <= 0) Die();
     }
 
     private void Die()
     {
-        // Instancie une carcasse
-        Vector3 spawnPos = transform.position;
+        Vector3 pos = transform.position;
         if (gridManager?.groundTilemap != null)
-        {
-            spawnPos = gridManager.groundTilemap
-                .GetCellCenterWorld(new Vector3Int(position.x, position.y, 0));
-        }
+            pos = gridManager.groundTilemap.GetCellCenterWorld(
+                new Vector3Int(position.x, position.y, 0));
 
         if (carcassPrefab != null)
         {
-            GameObject c = Instantiate(carcassPrefab, spawnPos, Quaternion.identity);
+            var c = Instantiate(carcassPrefab, pos, Quaternion.identity);
             var carc = c.GetComponent<Carcass>();
             if (carc != null)
             {
@@ -107,54 +99,37 @@ public class UnitController : MonoBehaviour
 
     public void MoveTo(Vector2Int targetPosition)
     {
-        if (hasActed || isMoving || gridManager == null)
-            return;
+        if (hasActed || isMoving) return;
 
-        // Si on reclique sur la même case, affiche le menu d'action
         if (targetPosition == position)
         {
             gridManager.actionPanel?.ShowPanel(this);
             return;
         }
 
-        GridCell targetCell = gridManager.GetCell(targetPosition);
-        if (targetCell == null)
-            return;
+        var occ = gridManager.GetUnitAtPosition(targetPosition);
+        if (occ != null && !IsAllied(occ)) return;
 
-        // Vérifie s'il y a un obstacle ou une unité ennemie
-        var occupant = gridManager.GetUnitAtPosition(targetPosition);
-        if (occupant != null && !IsAllied(occupant))
-            return;
+        var path = gridManager.FindPath(this, position, targetPosition);
+        if (path == null || path.Count == 0) return;
 
-        List<GridCell> path = gridManager.FindPath(this, position, targetPosition);
-        if (path == null || path.Count == 0)
-            return;
-
-        // Lance la coroutine de déplacement
         StartCoroutine(MoveAlongPath(path));
     }
 
     IEnumerator MoveAlongPath(List<GridCell> path)
     {
         isMoving = true;
-
-        // <-- NOUVEAU : dès le début du déplacement on nettoie
         gridManager.ClearHighlightedTiles();
         FindObjectOfType<ArrowPreviewManager>()?.ClearPathPreview();
 
-        if (path == null || path.Count == 0)
+        foreach (var cell in path)
         {
-            Debug.LogError("❌ Chemin vide !");
-            isMoving = false;
-            yield break;
-        }
-
-        foreach (GridCell cell in path)
-        {
-            Vector3 targetPos = gridManager.groundTilemap.GetCellCenterWorld((Vector3Int)cell.position);
-            while (Vector3.Distance(transform.position, targetPos) > 0.01f)
+            Vector3 tgt = gridManager.groundTilemap
+                .GetCellCenterWorld((Vector3Int)cell.position);
+            while (Vector3.Distance(transform.position, tgt) > 0.01f)
             {
-                transform.position = Vector3.MoveTowards(transform.position, targetPos, 2f * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(
+                    transform.position, tgt, 2f * Time.deltaTime);
                 yield return null;
             }
             position = cell.position;
@@ -162,23 +137,16 @@ public class UnitController : MonoBehaviour
         }
 
         isMoving = false;
-
-        // Affiche ensuite le panneau d'actions
-        if (gridManager.actionPanel != null)
-        {
-            gridManager.actionPanel.ShowPanel(this);
-        }
-        else
-        {
-            gridManager.selectedUnit = null;
-        }
+        // Summoning sickness after move
+        MarkAsWaiting();
+        gridManager.actionPanel?.ShowPanel(this);
     }
 
-
-
+    /// <summary>
+    /// Herbivores et omnivores consomment et gagnent en biomasse.
+    /// </summary>
     public void EatResource()
     {
-        // Herbivores et omnivores nourrissent leur estomac
         if (unitData.isHerbivore || unitData.isOmnivore)
         {
             currentStomach++;
@@ -190,19 +158,29 @@ public class UnitController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Ajoute de la biomasse à l’unité.
+    /// </summary>
     public void IncreaseBiomass(int amount)
     {
         currentBiomass += amount;
     }
 
+    /// <summary>
+    /// Épuise l’unité visuellement et empêche toute action.
+    /// </summary>
     public void MarkAsWaiting()
     {
         hasActed = true;
-        spriteRenderer.color = Color.gray;
+        if (spriteRenderer != null)
+            spriteRenderer.color = Color.gray;
         gridManager.selectedUnit = null;
         gridManager.ClearHighlightedTiles();
     }
 
+    /// <summary>
+    /// Réactive l’unité en début de tour.
+    /// </summary>
     public void ResetVisuals()
     {
         hasActed = false;
@@ -210,33 +188,25 @@ public class UnitController : MonoBehaviour
             spriteRenderer.color = Color.white;
     }
 
-    public bool IsAllied(UnitController other)
-    {
-        return this.team == other.team;
-    }
+    public bool IsAllied(UnitController o) => team == o.team;
 
     private void SnapToGrid()
     {
-        if (gridManager?.groundTilemap != null)
-        {
-            transform.position = gridManager.groundTilemap
-                .GetCellCenterWorld(new Vector3Int(position.x, position.y, 0));
-        }
+        if (gridManager?.groundTilemap == null) return;
+        transform.position = gridManager.groundTilemap.GetCellCenterWorld(
+            new Vector3Int(position.x, position.y, 0));
     }
 
     private void OnMouseDown()
     {
-        // Ne pas sélectionner si ce n’est pas son tour ou si l’unité a déjà agi
-        if (team != TurnManager.Instance.currentTeam || hasActed)
-            return;
-
-        // Sélectionne cette unité et affiche ses tuiles de déplacement
-        GridManager gm = FindObjectOfType<GridManager>();
-        gm.selectedUnit = this;
-        List<GridCell> tiles = gm.ComputeReachableTiles(this, position);
-        gm.HighlightReachableTiles(tiles, gm.defaultHighlightColor);
+        if (team != TurnManager.Instance.currentTeam || hasActed) return;
+        gridManager.selectedUnit = this;
+        var tiles = gridManager.ComputeReachableTiles(this, position);
+        gridManager.HighlightReachableTiles(tiles, gridManager.defaultHighlightColor);
     }
 }
+
+
 
 
 
