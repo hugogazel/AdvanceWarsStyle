@@ -19,6 +19,8 @@ MonoBehaviour:
   isPredator: 0
   isHerbivore: 1
   isOmnivore: 1
-  team: 0
+  defaultTeam: 0
   lifePoints: 10
   unitPrefab: {fileID: 3141480969798006704, guid: 09ca3122e5bc66e4ab6d527c7291622e, type: 3}
+  visionRange: 3
+  artwork: {fileID: 21300000, guid: e4be0fc46461dbe4999a28c57defa1bf, type: 3}

@@ -26,6 +26,10 @@ public class UnitController : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI lifePointsText;
 
+    // ← Nouveaux champs pour annulation
+    private Vector2Int savedGridPos;
+    private Vector3 savedWorldPos;
+
     private GridManager gridManager;
     private SpriteRenderer spriteRenderer;
     private Animator animator;
@@ -101,6 +105,10 @@ public class UnitController : MonoBehaviour
     {
         if (hasActed || isMoving) return;
 
+        // ← Sauvegarde de la position avant mouvement
+        savedGridPos = position;
+        savedWorldPos = transform.position;
+
         if (targetPosition == position)
         {
             gridManager.actionPanel?.ShowPanel(this);
@@ -137,14 +145,33 @@ public class UnitController : MonoBehaviour
         }
 
         isMoving = false;
-        // Summoning sickness after move
+        // Unité épuisée après move
         MarkAsWaiting();
         gridManager.actionPanel?.ShowPanel(this);
     }
 
     /// <summary>
-    /// Herbivores et omnivores consomment et gagnent en biomasse.
+    /// Annule le dernier déplacement et remet l’unité à sa position initiale.
     /// </summary>
+    public void CancelMove()
+    {
+        // Stoppe l’animation de déplacement en cours
+        StopAllCoroutines();
+        isMoving = false;
+
+        // Remet la position que l’on avait sauvegardée
+        transform.position = savedWorldPos;
+        position = savedGridPos;
+
+        // Nettoie l’UI (cases surlignées + flèches)
+        gridManager.ClearHighlightedTiles();
+        FindObjectOfType<ArrowPreviewManager>()?.ClearPathPreview();
+
+        // → NE PLUS laisser l’unité épuisée : on la réactive
+        ResetVisuals();  // fait hasActed = false et recolore en blanc
+    }
+
+
     public void EatResource()
     {
         if (unitData.isHerbivore || unitData.isOmnivore)
@@ -158,17 +185,11 @@ public class UnitController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Ajoute de la biomasse à l’unité.
-    /// </summary>
     public void IncreaseBiomass(int amount)
     {
         currentBiomass += amount;
     }
 
-    /// <summary>
-    /// Épuise l’unité visuellement et empêche toute action.
-    /// </summary>
     public void MarkAsWaiting()
     {
         hasActed = true;
@@ -178,9 +199,6 @@ public class UnitController : MonoBehaviour
         gridManager.ClearHighlightedTiles();
     }
 
-    /// <summary>
-    /// Réactive l’unité en début de tour.
-    /// </summary>
     public void ResetVisuals()
     {
         hasActed = false;
@@ -205,6 +223,7 @@ public class UnitController : MonoBehaviour
         gridManager.HighlightReachableTiles(tiles, gridManager.defaultHighlightColor);
     }
 }
+
 
 
 

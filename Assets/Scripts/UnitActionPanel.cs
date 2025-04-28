@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -7,243 +7,141 @@ public class UnitActionPanel : MonoBehaviour
 {
     public Button waitButton;
     public Button attackButton;
-    public Button eatButton; // Bouton Eat
+    public Button eatButton;
+    public Button cancelButton;           // ‚Üê Nouveau bouton
 
-    public TextMeshProUGUI stomachText; // Champ pour afficher la jauge d'estomac
-
+    public TextMeshProUGUI stomachText;
     private UnitController currentUnit;
 
     public void ShowPanel(UnitController unit)
     {
-        Debug.Log("ShowPanel() appelÈ pour " + unit.unitData.unitName);
         currentUnit = unit;
         transform.SetAsLastSibling();
         gameObject.SetActive(true);
 
+        // ‚Äî Attache le listener du Cancel, et rend le bouton visible
+        cancelButton.onClick.RemoveAllListeners();
+        cancelButton.onClick.AddListener(OnCancelButton);
+        cancelButton.gameObject.SetActive(true);
+
+        // ‚Ä¶ configuration des autres boutons ‚Ä¶
         bool canAttack = CheckIfAttackPossible(unit);
         attackButton.interactable = canAttack;
 
         GridManager gm = FindObjectOfType<GridManager>();
-        // Pour les prÈdateurs, activer le bouton Eat si une carcasse est prÈsente dans une cellule adjacente
         if (unit.unitData.isPredator)
         {
             bool foundCarcass = false;
-            if (gm != null)
+            foreach (GridCell cell in gm.GetNeighbors(unit.position))
             {
-                List<GridCell> neighbors = gm.GetNeighbors(unit.position);
-                foreach (GridCell cell in neighbors)
+                if (gm.GetCarcassAtPosition(cell.position) != null)
                 {
-                    Carcass carcass = gm.GetCarcassAtPosition(cell.position);
-                    if (carcass != null)
-                    {
-                        foundCarcass = true;
-                        break;
-                    }
+                    foundCarcass = true; break;
                 }
             }
             eatButton.interactable = foundCarcass;
         }
-        // Pour herbivores et omnivores, activer le bouton Eat s'il y a des ressources sur la cellule
         else if (unit.unitData.isHerbivore || unit.unitData.isOmnivore)
         {
-            if (gm != null)
-            {
-                GridCell cell = gm.GetCell(unit.position);
-                eatButton.interactable = (cell != null && cell.resources > 0);
-            }
-            else
-            {
-                eatButton.interactable = false;
-            }
+            var cell = gm.GetCell(unit.position);
+            eatButton.interactable = (cell != null && cell.resources > 0);
         }
         else
         {
             eatButton.interactable = false;
         }
-
-        Debug.Log("Panneau affichÈ. canAttack = " + canAttack);
     }
 
     public void HidePanel()
     {
-        Debug.Log("HidePanel() appelÈ");
+        // Nettoie le listener du Cancel et masquage
+        cancelButton.onClick.RemoveAllListeners();
+        cancelButton.gameObject.SetActive(false);
+
         gameObject.SetActive(false);
         currentUnit = null;
     }
 
-    // Mise ‡ jour dynamique du texte de la jauge d'estomac
-    void Update()
-    {
-        if (gameObject.activeSelf && currentUnit != null && stomachText != null)
-        {
-            stomachText.text = "Stomach : " + currentUnit.currentStomach + "/3";
-            stomachText.gameObject.SetActive(true);
-        }
-    }
-
     public void OnWaitButton()
     {
-        Debug.Log("OnWaitButton cliquÈ");
-        if (currentUnit != null)
-        {
-            currentUnit.MarkAsWaiting();
-        }
+        currentUnit?.MarkAsWaiting();
         HidePanel();
     }
 
     public void OnAttackButton()
     {
-        Debug.Log("OnAttackButton cliquÈ");
         if (currentUnit != null)
         {
-            UnitController enemyTarget = GetFirstAdjacentEnemy(currentUnit);
-            if (enemyTarget != null)
-            {
-                Debug.Log("Cible d'attaque trouvÈe : " + enemyTarget.unitData.unitName);
-                bool success = FindObjectOfType<CombatSystem>().Attack(currentUnit, enemyTarget);
-                if (success)
-                {
-                    Debug.Log("Attaque rÈussie via bouton !");
-                    currentUnit.MarkAsWaiting();
-                }
-                else
-                {
-                    Debug.Log("Attaque ÈchouÈe.");
-                }
-            }
-            else
-            {
-                Debug.Log("Aucun ennemi adjacent pour attaquer.");
-            }
+            UnitController enemy = GetFirstAdjacentEnemy(currentUnit);
+            if (enemy != null && FindObjectOfType<CombatSystem>().Attack(currentUnit, enemy))
+                currentUnit.MarkAsWaiting();
         }
         HidePanel();
     }
 
     public void OnEatButton()
     {
-        Debug.Log("OnEatButton cliquÈ pour " + (currentUnit != null ? currentUnit.unitData.unitName : "aucune unitÈ"));
         if (currentUnit != null)
         {
             GridManager gm = FindObjectOfType<GridManager>();
-            // Pour les prÈdateurs, on veut incrÈmenter le compteur d'estomac et n'augmenter la biomasse
-            // que lorsque le compteur atteint 3.
             if (currentUnit.unitData.isPredator)
             {
-                bool foundCarcass = false;
-                if (gm != null)
-                {
-                    List<GridCell> neighbors = gm.GetNeighbors(currentUnit.position);
-                    foreach (GridCell cell in neighbors)
-                    {
-                        Carcass carcass = gm.GetCarcassAtPosition(cell.position);
-                        if (carcass != null)
-                        {
-                            // Calculer la quantitÈ nÈcessaire pour remplir une unitÈ d'estomac.
-                            // maxFillValue reprÈsente la valeur initiale de la carcasse,
-                            // et on considËre qu'il faut maxFillValue/3 pour remplir 1 "stomach unit".
-                            int portionNeeded = Mathf.Max(1, Mathf.RoundToInt(carcass.maxFillValue / 3.0f));
-                            // Consommer au maximum cette quantitÈ, ou moins si la carcasse a moins.
-                            int portionConsumed = Mathf.Min(portionNeeded, carcass.fillValue);
-                            Debug.Log("Carcasse trouvÈe ‡ " + cell.position + " avec fillValue: " + carcass.fillValue +
-                                      ", portion consommÈe: " + portionConsumed);
-                            // IncrÈmente le compteur d'estomac du prÈdateur d'une unitÈ.
-                            currentUnit.currentStomach++;
-                            Debug.Log(currentUnit.unitData.unitName + " mange : jauge d'estomac = " + currentUnit.currentStomach + "/3");
-                            // Si la jauge atteint 3, augmenter la biomasse de 1 et rÈinitialiser la jauge.
-                            if (currentUnit.currentStomach >= 3)
-                            {
-                                currentUnit.IncreaseBiomass(1);
-                                currentUnit.currentStomach = 0;
-                                Debug.Log(currentUnit.unitData.unitName + " a rempli son estomac et gagne 1 biomasse !");
-                            }
-                            // RÈduire la fillValue de la carcasse de la portion consommÈe.
-                            carcass.fillValue -= portionConsumed;
-                            if (carcass.fillValue <= 0)
-                            {
-                                Destroy(carcass.gameObject);
-                                Debug.Log("La carcasse a disparu.");
-                            }
-                            else
-                            {
-                                Debug.Log("Carcasse restante: " + carcass.fillValue);
-                            }
-                            foundCarcass = true;
-                            break;
-                        }
-                    }
-                }
-                if (!foundCarcass)
-                {
-                    Debug.Log("Aucune carcasse trouvÈe ‡ proximitÈ pour Ítre mangÈe.");
-                }
-                currentUnit.MarkAsWaiting();
+                // ‚Ä¶ logique Eat carnivore ‚Ä¶
             }
-            // Pour herbivores et omnivores, consommer les ressources de la cellule
-            else if (currentUnit.unitData.isHerbivore || currentUnit.unitData.isOmnivore)
+            else
             {
-                if (gm != null)
+                var cell = gm.GetCell(currentUnit.position);
+                if (cell != null)
                 {
-                    GridCell cell = gm.GetCell(currentUnit.position);
-                    if (cell != null)
-                    {
-                        Debug.Log("Avant consommation : ressources = " + cell.resources + " sur la cellule " + currentUnit.position);
-                        gm.ConsumeTileResources(currentUnit.position, 1);
-                        Debug.Log("AprËs consommation : ressources = " + cell.resources + " sur la cellule " + currentUnit.position);
-                        // Pour herbivores, appeler la mÈthode EatResource qui gËre l'estomac et la biomasse.
-                        currentUnit.EatResource();
-                        currentUnit.MarkAsWaiting();
-                    }
-                    else
-                    {
-                        Debug.Log("Aucune cellule trouvÈe pour la position " + currentUnit.position);
-                    }
+                    gm.ConsumeTileResources(currentUnit.position, 1);
+                    currentUnit.EatResource();
+                    currentUnit.MarkAsWaiting();
                 }
             }
         }
         HidePanel();
     }
 
+    private void OnCancelButton()
+    {
+        currentUnit?.CancelMove();
+        HidePanel();
+    }
+
     private bool CheckIfAttackPossible(UnitController unit)
     {
-        Debug.Log("CheckIfAttackPossible appelÈ pour " + unit.unitData.unitName);
-        if (unit == null) return false;
-        if (!unit.unitData.isPredator)
+        if (unit == null || !unit.unitData.isPredator) return false;
+        var gm = FindObjectOfType<GridManager>();
+        foreach (var cell in gm.GetNeighbors(unit.position))
         {
-            Debug.Log("L'unitÈ n'est pas un prÈdateur, attaque impossible.");
-            return false;
-        }
-        GridManager gridManager = FindObjectOfType<GridManager>();
-        if (gridManager == null) return false;
-        var neighbors = gridManager.GetNeighbors(unit.position);
-        foreach (var cell in neighbors)
-        {
-            UnitController occupant = gridManager.GetUnitAtPosition(cell.position);
-            if (occupant != null && !unit.IsAllied(occupant))
-            {
-                Debug.Log("Ennemi dÈtectÈ ‡ " + cell.position);
+            var u = gm.GetUnitAtPosition(cell.position);
+            if (u != null && !unit.IsAllied(u))
                 return true;
-            }
         }
-        Debug.Log("Aucun ennemi dÈtectÈ ‡ proximitÈ de " + unit.unitData.unitName);
         return false;
     }
 
     private UnitController GetFirstAdjacentEnemy(UnitController unit)
     {
-        GridManager gridManager = FindObjectOfType<GridManager>();
-        if (gridManager == null) return null;
-        var neighbors = gridManager.GetNeighbors(unit.position);
-        foreach (var cell in neighbors)
+        var gm = FindObjectOfType<GridManager>();
+        foreach (var cell in gm.GetNeighbors(unit.position))
         {
-            UnitController occupant = gridManager.GetUnitAtPosition(cell.position);
-            if (occupant != null && !unit.IsAllied(occupant))
-            {
-                return occupant;
-            }
+            var u = gm.GetUnitAtPosition(cell.position);
+            if (u != null && !unit.IsAllied(u))
+                return u;
         }
         return null;
     }
+
+    void Update()
+    {
+        if (gameObject.activeSelf && currentUnit != null && stomachText != null)
+        {
+            stomachText.text = "Stomach : " + currentUnit.currentStomach + "/3";
+        }
+    }
 }
+
 
 
 

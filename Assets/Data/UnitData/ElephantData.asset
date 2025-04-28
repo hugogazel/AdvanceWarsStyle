@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 42cd5292309eeb446af7bb7ce097a05e, type: 3}
-  m_Name: BearData
+  m_Name: ElephantData
   m_EditorClassIdentifier: 
-  unitName: Bear
-  unitSprite: {fileID: 836188495, guid: d31d8e34f68101145b905cfbc9f44d53, type: 3}
+  unitName: Elephant
+  unitSprite: {fileID: 1154450489, guid: 366371b9b246bbd4bb582d836873ad82, type: 3}
   maxMovePoints: 3
-  biomass: 3
-  isPredator: 1
-  isHerbivore: 0
+  biomass: 4
+  isPredator: 0
+  isHerbivore: 1
   isOmnivore: 0
   defaultTeam: 0
   lifePoints: 10
-  unitPrefab: {fileID: 7913209052898807411, guid: 71a59e2aea0d8d341a8e25bd27edc3fe, type: 3}
+  unitPrefab: {fileID: 5430200623993150335, guid: 91bb73aba8eaa7648ac2a852a06fde2c, type: 3}
   visionRange: 3
-  artwork: {fileID: 21300000, guid: 70e2fbebb8c8c844f8edd5f0c118772d, type: 3}
+  artwork: {fileID: 21300000, guid: 135cb1706fd85c742bb05522507836e5, type: 3}

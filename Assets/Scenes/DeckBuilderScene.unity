@@ -714,6 +714,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f3d4311760fdc764fad5f3eeae761ac6, type: 2}
   - {fileID: 11400000, guid: a99ca3a813b17cb478143dc9a9c37024, type: 2}
   - {fileID: 11400000, guid: f8e2a9de22de09c46a65b15f39071bb6, type: 2}
+  - {fileID: 11400000, guid: 26fe667e539eab44d987a4a93b4e88fe, type: 2}
+  - {fileID: 11400000, guid: 0ab0154836ca3314983d88e1f9da735e, type: 2}
+  - {fileID: 11400000, guid: 8461503563b2a9544b8da908a5e8e8b3, type: 2}
   selectedDeckCards: []
   maxCardsInDeck: 10
   maxTotalBiomass: 10
@@ -1707,7 +1710,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1868398345}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -2170,6 +2173,9 @@ MonoBehaviour:
   playerTurnDisplayTime: 2
   turnEndPanel: {fileID: 0}
   currentTeam: 0
+  hasDeployedThisTurn: 0
+  j1FreeDropUsed: 0
+  j2FreeDropUsed: 0
 --- !u!4 &2041879590
 Transform:
   m_ObjectHideFlags: 0

@@ -15,10 +15,12 @@ MonoBehaviour:
   unitName: Snake
   unitSprite: {fileID: -1579774748, guid: d31d8e34f68101145b905cfbc9f44d53, type: 3}
   maxMovePoints: 2
-  biomass: 2
+  biomass: 1
   isPredator: 1
   isHerbivore: 0
   isOmnivore: 0
-  team: 0
+  defaultTeam: 0
   lifePoints: 10
   unitPrefab: {fileID: 650626614557392465, guid: d3074bfb5851ba34c80b875fc01208f0, type: 3}
+  visionRange: 3
+  artwork: {fileID: 0}
