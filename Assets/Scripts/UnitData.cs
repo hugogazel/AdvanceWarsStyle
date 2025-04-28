@@ -6,6 +6,11 @@ public enum Team
     J1Team,
     J2Team
 }
+public enum Sex
+{
+    Male,
+    Female
+}
 
 [CreateAssetMenu(fileName = "NewUnitData", menuName = "Game/UnitData")]
 public class UnitData : ScriptableObject
@@ -31,6 +36,9 @@ public class UnitData : ScriptableObject
 
     [Header("Artwork pour CardInfoPanel")]
     public Sprite artwork;
+
+    [Header("Reproduction")]
+    public Sex sex;  // ♂ ou ♀
 }
 
 

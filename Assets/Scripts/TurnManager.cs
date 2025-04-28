@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class TurnManager : MonoBehaviour
@@ -15,48 +16,82 @@ public class TurnManager : MonoBehaviour
     public Transform unitCardPanel;
     public GameObject cardPrefab;
 
-    [Header("Notification de tour")]
-    public TextMeshProUGUI playerTurnText;
-    public float playerTurnDisplayTime = 2f;
+    [Header("Relais Tour")]
+    public GameObject turnChangePanel;      // Le panel couvrant la map au début du tour
+    public Button readyButton;              // Bouton "I'm ready"
+    public TextMeshProUGUI playerTurnText;  // Le texte "J1 Turn" / "J2 Turn"
 
     [Header("Panel de fin de tour")]
-    public GameObject turnEndPanel;
+    public GameObject turnEndPanel;         // Le panel de confirmation de fin de tour
 
     [Header("Tour courant")]
     public Team currentTeam = Team.J1Team;
 
-    [HideInInspector]
-    public bool hasDeployedThisTurn = false;
-
-    // ← Nouveaux flags pour le free-drop unique
+    [HideInInspector] public bool hasDeployedThisTurn = false;
     [HideInInspector] public bool j1FreeDropUsed = false;
     [HideInInspector] public bool j2FreeDropUsed = false;
 
     private void Awake()
     {
+        // Singleton
         if (Instance != null && Instance != this)
             Destroy(gameObject);
         else
             Instance = this;
 
-        // On démarre avec aucun free-drop consommé
         j1FreeDropUsed = false;
         j2FreeDropUsed = false;
     }
 
     private void Start()
     {
+        // Récupère les decks
         player1Deck = GameManager.Instance.player1Deck;
         player2Deck = GameManager.Instance.player2Deck;
+
+        // Abonne le bouton "I'm ready"
+        readyButton.onClick.AddListener(OnReadyClicked);
+
+        // Démarre le premier tour
+        StartTurn();
+    }
+
+    /// <summary>
+    /// Initialise un tour : affiche le panel de relais, bloque l'input et prépare l'UI.
+    /// </summary>
+    private void StartTurn()
+    {
+        // Détermine l'équipe courante
         currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
             ? Team.J1Team
             : Team.J2Team;
 
+        // Affiche la main
         ShowPlayerHand();
-        ResetUnitsForCurrentTeam();
-        ShowPlayerTurnText();
 
+        // Reset des unités
+        ResetUnitsForCurrentTeam();
+
+        // Prépare le texte
+        playerTurnText.text = (currentTeam == Team.J1Team) ? "J1 Turn" : "J2 Turn";
+
+        // Affiche le panel de relais
+        turnChangePanel.SetActive(true);
+
+        // Bloque tout input de jeu
+        GameManager.inputLocked = true;
+
+        // Marque qu'on n'a pas encore déployé
         hasDeployedThisTurn = false;
+    }
+
+    /// <summary>
+    /// Appelé quand le joueur clique sur "I'm ready" : ferme le relais et débloque l'input.
+    /// </summary>
+    private void OnReadyClicked()
+    {
+        turnChangePanel.SetActive(false);
+        GameManager.inputLocked = false;
     }
 
     private void ShowPlayerHand()
@@ -67,20 +102,6 @@ public class TurnManager : MonoBehaviour
         var deck = (currentTeam == Team.J1Team) ? player1Deck : player2Deck;
         foreach (var data in deck)
             Instantiate(cardPrefab, unitCardPanel).GetComponent<UnitCardUI>().Initialize(data);
-    }
-
-    public void ShowPlayerTurnText()
-    {
-        if (playerTurnText == null) return;
-        playerTurnText.text = currentTeam == Team.J1Team ? "J1 Turn" : "J2 Turn";
-        playerTurnText.gameObject.SetActive(true);
-        StartCoroutine(HidePlayerTurnTextAfterDelay());
-    }
-
-    private IEnumerator HidePlayerTurnTextAfterDelay()
-    {
-        yield return new WaitForSeconds(playerTurnDisplayTime);
-        playerTurnText.gameObject.SetActive(false);
     }
 
     public void ShowEndTurnPanelOnly()
@@ -95,16 +116,13 @@ public class TurnManager : MonoBehaviour
 
     public void OnConfirmEndTurn()
     {
+        // Change le tour dans le GameManager
         GameManager.Instance.EndTurn();
-        currentTeam = (GameManager.Instance.currentPlayerTurn == 1)
-            ? Team.J1Team
-            : Team.J2Team;
 
-        hasDeployedThisTurn = false;
-        ResetUnitsForCurrentTeam();
-        ShowPlayerHand();
-        ShowPlayerTurnText();
+        // Relance un nouveau tour
+        StartTurn();
 
+        // Masque le panel de fin de tour
         turnEndPanel?.SetActive(false);
     }
 
@@ -115,6 +133,7 @@ public class TurnManager : MonoBehaviour
                 unit.ResetVisuals();
     }
 }
+
 
 
 

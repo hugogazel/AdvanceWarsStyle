@@ -25,10 +25,13 @@ public class GameInputManager : MonoBehaviour
 
     void Update()
     {
+        // Tant que le panneau "I'm ready" est actif, on ignore tout input
+        if (GameManager.inputLocked)
+            return;
+
         if (EventSystem.current.IsPointerOverGameObject())
             return;
 
-        // Affichage dynamique de la preview de chemin
         UpdatePathPreview();
 
         if (Input.GetMouseButtonDown(0))
@@ -52,7 +55,7 @@ public class GameInputManager : MonoBehaviour
         {
             var path = gridManager.FindPath(sel, sel.position, gridPos);
             if (path != null && path.Count > 0)
-                arrowPreviewManager.ShowPathPreview(path);  // <-- méthode correcte :contentReference[oaicite:0]{index=0}&#8203;:contentReference[oaicite:1]{index=1}
+                arrowPreviewManager.ShowPathPreview(path);
         }
     }
 
@@ -61,7 +64,7 @@ public class GameInputManager : MonoBehaviour
         Vector3 worldPos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         worldPos.z = 0f;
 
-        // 1) Clic sur unité
+        // 1) Sélection d'une unité
         Collider2D[] hits = Physics2D.OverlapCircleAll(worldPos, 0.2f, unitLayerMask);
         if (hits.Length > 0)
         {
@@ -77,7 +80,7 @@ public class GameInputManager : MonoBehaviour
             return;
         }
 
-        // 2) Clic sur case vide
+        // 2) Déplacement sur case vide
         Vector3Int cellPos = gridManager.groundTilemap.WorldToCell(worldPos);
         Vector2Int gridPos = new Vector2Int(cellPos.x, cellPos.y);
         if (gridManager.selectedUnit != null && gridManager.highlightedTiles.Count > 0)
@@ -88,6 +91,7 @@ public class GameInputManager : MonoBehaviour
             }
             else
             {
+                // Annule la sélection
                 gridManager.ClearHighlightedTiles();
                 arrowPreviewManager.ClearPathPreview();
                 gridManager.selectedUnit = null;
@@ -95,10 +99,11 @@ public class GameInputManager : MonoBehaviour
             return;
         }
 
-        // 3) Autre clic -> fin de tour
+        // 3) Clic ailleurs → lance la fin de tour
         turnManager?.ShowEndTurnPanelOnly();
     }
 }
+
 
 
 
