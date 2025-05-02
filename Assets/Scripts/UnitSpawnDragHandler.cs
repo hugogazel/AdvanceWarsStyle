@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -14,13 +15,13 @@ public class UnitSpawnDragHandler : MonoBehaviour,
 
     private Camera mainCamera;
     private GridManager gridManager;
-
-    private GameObject prefabToSpawn;
     private GameObject spawnedUnit;
+    private UnitController previewController;    // <--- nouvelle référence
     private bool dragging = false;
-
-    // Pour savoir si c’était le tout premier drop du joueur
     private bool wasFirstEverDrop = false;
+
+    // Liste pré-calculée des cases valides pendant le drag
+    private List<Vector2Int> validSpawnPositions = new List<Vector2Int>();
 
     private static readonly Vector2Int[] directions4 = {
         new Vector2Int(1, 0),
@@ -36,68 +37,100 @@ public class UnitSpawnDragHandler : MonoBehaviour,
             enabled = false;
             return;
         }
+
         mainCamera = Camera.main;
         gridManager = FindObjectOfType<GridManager>();
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // 1) Toujours vider les anciens surlignages
         gridManager.ClearHighlightedTiles();
 
-        // 2) Bloquer si on a déjà déployé ce tour
         if (TurnManager.Instance.hasDeployedThisTurn)
             return;
 
-        // 3) Déterminer si c'est le 1er drop EVER
         wasFirstEverDrop = !FindObjectsOfType<UnitController>()
             .Any(u => u.team == TurnManager.Instance.currentTeam);
 
-        // 4) Instancier la preview
+        // ——— Instanciation de la preview ———
         var ui = GetComponent<UnitCardUI>();
         if (ui == null || ui.unitPrefab == null)
             return;
-        prefabToSpawn = ui.unitPrefab;
-        spawnedUnit = Instantiate(prefabToSpawn);
+
+        spawnedUnit = Instantiate(ui.unitPrefab);
         if (spawnedUnit.TryGetComponent<UnitController>(out var uc))
         {
             uc.team = TurnManager.Instance.currentTeam;
             uc.unitData = ui.unitData;
+            previewController = uc;    // <--- on conserve la référence
         }
 
-        // 5) Choisir le surlignage
-        bool freeAllowed = wasFirstEverDrop
-            && (TurnManager.Instance.currentTeam == Team.J1Team
-                ? !TurnManager.Instance.j1FreeDropUsed
-                : !TurnManager.Instance.j2FreeDropUsed);
+        // ——— Construction de la liste des cases valides ———
+        validSpawnPositions.Clear();
+        var tm = TurnManager.Instance;
+        bool freeAllowed = wasFirstEverDrop &&
+            ((tm.currentTeam == Team.J1Team && !tm.j1FreeDropUsed) ||
+             (tm.currentTeam == Team.J2Team && !tm.j2FreeDropUsed));
 
         if (freeAllowed)
         {
-            // zone morte autour des ennemis
+            // Free-drop : toutes les cases libres hors zone morte
+            var enemies = FindObjectsOfType<UnitController>()
+                .Where(u => u.team != tm.currentTeam)
+                .ToList();
+
+            var bounds = gridManager.groundTilemap.cellBounds;
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+                for (int y = bounds.yMin; y < bounds.yMax; y++)
+                {
+                    var pos = new Vector2Int(x, y);
+                    if (!gridManager.IsTileReachable(pos) ||
+                        gridManager.GetUnitAtPosition(pos) != null)
+                        continue;
+
+                    bool inDeadZone = enemies.Any(u =>
+                        Mathf.Abs(u.position.x - pos.x) +
+                        Mathf.Abs(u.position.y - pos.y)
+                        <= freeDropDeadZone);
+
+                    if (!inDeadZone)
+                        validSpawnPositions.Add(pos);
+                }
+
             gridManager.HighlightInvalidDeployTiles(
-                TurnManager.Instance.currentTeam,
+                tm.currentTeam,
                 freeDropDeadZone
             );
         }
         else
         {
-            // adjacency-only, exclut la preview et toute unité (alliée ou non)
-            var allies = FindObjectsOfType<UnitController>()
-                           .Where(u => u.gameObject != spawnedUnit
-                                    && u.team == TurnManager.Instance.currentTeam
-                                    && !u.hasActed);
-
-            var valid = allies
-                .SelectMany(u => directions4.Select(d => u.position + d))
-                .Distinct()
-                .Where(pos => gridManager.IsTileReachable(pos))
-                // *** NOUVEAU : exclure les tuiles occupées ***
-                .Where(pos => gridManager.GetUnitAtPosition(pos) == null)
-                .Select(pos => gridManager.GetCell(pos))
-                .Where(cell => cell != null)
+            // ——— Adjacency-only, en excluant la preview ———
+            var ownUnits = FindObjectsOfType<UnitController>()
+                .Where(u =>
+                    u.team == tm.currentTeam &&
+                    !u.hasActed &&
+                    u != previewController         // <--- ici on exclut la preview
+                )
                 .ToList();
 
-            gridManager.HighlightReachableTiles(valid, gridManager.defaultHighlightColor);
+            validSpawnPositions = ownUnits
+                .SelectMany(u => directions4.Select(d => u.position + d))
+                .Distinct()
+                .Where(pos =>
+                    gridManager.IsTileReachable(pos) &&
+                    gridManager.GetUnitAtPosition(pos) == null
+                )
+                .ToList();
+
+            var highlightCells = validSpawnPositions
+                .Select(p => gridManager.GetCell(p))
+                .Where(c => c != null)
+                .ToList();
+
+            gridManager.HighlightReachableTiles(
+                highlightCells,
+                gridManager.defaultHighlightColor
+            );
         }
 
         dragging = true;
@@ -105,7 +138,8 @@ public class UnitSpawnDragHandler : MonoBehaviour,
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!dragging || spawnedUnit == null) return;
+        if (!dragging || spawnedUnit == null)
+            return;
 
         Vector3 screenPos = new Vector3(
             eventData.position.x,
@@ -114,27 +148,27 @@ public class UnitSpawnDragHandler : MonoBehaviour,
         );
         Vector3 worldPos = mainCamera.ScreenToWorldPoint(screenPos);
         worldPos.z = 0f;
-
         var cell = gridManager.groundTilemap.WorldToCell(worldPos);
-        var center = gridManager.groundTilemap.GetCellCenterWorld(cell);
-        spawnedUnit.transform.position = center;
+        spawnedUnit.transform.position =
+            gridManager.groundTilemap.GetCellCenterWorld(cell);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        gridManager.ClearHighlightedTiles();
-
         if (!dragging || spawnedUnit == null)
             return;
         dragging = false;
 
+        // Si déjà déployé ce tour, on annule direct
         if (TurnManager.Instance.hasDeployedThisTurn)
         {
             Destroy(spawnedUnit);
-            spawnedUnit = null;
+            gridManager.ClearHighlightedTiles();
+            previewController = null;
             return;
         }
 
+        // Calcul de la case de drop
         Vector3 screenPos = new Vector3(
             eventData.position.x,
             eventData.position.y,
@@ -145,21 +179,36 @@ public class UnitSpawnDragHandler : MonoBehaviour,
         Vector3Int cell3 = gridManager.groundTilemap.WorldToCell(worldPos);
         Vector2Int gridPos = new Vector2Int(cell3.x, cell3.y);
 
-        if (gridManager.IsTileReachable(gridPos)
-            && CanDeployAt(gridPos, wasFirstEverDrop))
+        if (validSpawnPositions.Contains(gridPos))
         {
-            Vector3 center = gridManager.groundTilemap.GetCellCenterWorld(cell3);
-            spawnedUnit.transform.position = center;
+            // Snap final
+            spawnedUnit.transform.position =
+                gridManager.groundTilemap.GetCellCenterWorld(cell3);
 
-            if (spawnedUnit.TryGetComponent<UnitController>(out var uc))
+            // Positionne et GRİSE l'unité en même temps
+            if (spawnedUnit.TryGetComponent<UnitController>(out var uc2))
             {
-                uc.position = gridPos;
-                uc.MarkAsWaiting();
+                uc2.position = gridPos;
+                uc2.MarkAsWaiting();    // ← remplace uc2.hasActed = true + gère la couleur grisée
             }
 
             ApplyLayerAndCollider();
-            RemoveDraggedCard(eventData);
 
+            // Suppression de la carte UI et retrait du deck
+            if (eventData.pointerDrag != null)
+            {
+                var draggedUi = eventData.pointerDrag.GetComponent<UnitCardUI>();
+                if (draggedUi != null)
+                {
+                    if (TurnManager.Instance.currentTeam == Team.J1Team)
+                        TurnManager.Instance.player1Deck.Remove(draggedUi.unitData);
+                    else
+                        TurnManager.Instance.player2Deck.Remove(draggedUi.unitData);
+                }
+                Destroy(eventData.pointerDrag);
+            }
+
+            // Maj du TurnManager
             TurnManager.Instance.hasDeployedThisTurn = true;
             if (wasFirstEverDrop)
             {
@@ -174,63 +223,27 @@ public class UnitSpawnDragHandler : MonoBehaviour,
             Destroy(spawnedUnit);
         }
 
+        // Cleanup
         spawnedUnit = null;
+        previewController = null;
+        gridManager.ClearHighlightedTiles();
     }
 
-    private bool CanDeployAt(Vector2Int pos, bool isFirstEver)
-    {
-        var tm = TurnManager.Instance;
-        if (isFirstEver)
-        {
-            bool freeAllowed = tm.currentTeam == Team.J1Team
-                ? !tm.j1FreeDropUsed
-                : !tm.j2FreeDropUsed;
-            if (freeAllowed)
-            {
-                bool blocked = FindObjectsOfType<UnitController>()
-                    .Where(u => u.team != tm.currentTeam)
-                    .Any(u =>
-                        Mathf.Abs(u.position.x - pos.x) +
-                        Mathf.Abs(u.position.y - pos.y)
-                        <= freeDropDeadZone
-                    );
-                if (!blocked) return true;
-            }
-        }
-        // adjacency-only
-        return directions4.Any(d =>
-        {
-            var nb = pos + d;
-            var u = gridManager.GetUnitAtPosition(nb);
-            return u != null && u.team == tm.currentTeam && !u.hasActed;
-        });
-    }
+
 
     private void ApplyLayerAndCollider()
     {
         int layer = LayerMask.NameToLayer(unitLayerName);
-        if (layer < 0) layer = LayerMask.NameToLayer("Default");
+        if (layer < 0)
+            layer = LayerMask.NameToLayer("Default");
         foreach (var t in spawnedUnit.GetComponentsInChildren<Transform>(true))
             t.gameObject.layer = layer;
         if (spawnedUnit.GetComponentInChildren<Collider2D>() == null)
             spawnedUnit.AddComponent<CircleCollider2D>();
     }
-
-    private void RemoveDraggedCard(PointerEventData eventData)
-    {
-        var drag = eventData.pointerDrag;
-        if (drag == null) return;
-        var ui = drag.GetComponent<UnitCardUI>();
-        if (ui != null)
-        {
-            if (TurnManager.Instance.currentTeam == Team.J1Team)
-                TurnManager.Instance.player1Deck.Remove(ui.unitData);
-            else
-                TurnManager.Instance.player2Deck.Remove(ui.unitData);
-        }
-        Destroy(drag);
-    }
 }
+
+
 
 
 

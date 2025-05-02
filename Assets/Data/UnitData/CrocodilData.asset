@@ -23,4 +23,5 @@ MonoBehaviour:
   lifePoints: 10
   unitPrefab: {fileID: 3237323998326327859, guid: e08361d05ca8d7441a00173c4d211a2b, type: 3}
   visionRange: 3
-  artwork: {fileID: 0}
+  artwork: {fileID: 21300000, guid: 5a6fb330bfa60f74699411c5cd4f0cf9, type: 3}
+  sex: 0
