@@ -8319,6 +8319,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: AvailableCardPrefab
       objectReference: {fileID: 0}
+    - target: {fileID: 4635078181881304791, guid: 65c2c181077fd734b987ed688b3c8599, type: 3}
+      propertyPath: cardBackground
+      value: 
+      objectReference: {fileID: 1638282724}
     - target: {fileID: 5537318653293519496, guid: 65c2c181077fd734b987ed688b3c8599, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8409,6 +8413,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5537318653293519496, guid: 65c2c181077fd734b987ed688b3c8599, type: 3}
   m_PrefabInstance: {fileID: 1638282722}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1638282724 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8422274538305766245, guid: 65c2c181077fd734b987ed688b3c8599, type: 3}
+  m_PrefabInstance: {fileID: 1638282722}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1689790083
 GameObject:
   m_ObjectHideFlags: 0
