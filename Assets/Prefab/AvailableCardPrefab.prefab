@@ -306,10 +306,10 @@ MonoBehaviour:
   cardBackground: {fileID: 5433848212958852441}
   unitSpriteImage: {fileID: 6710403704996672494}
   biomassText: {fileID: 1616543161938885369}
-  unitData: {fileID: 0}
-  unitPrefab: {fileID: 0}
   maleColor: {r: 0.4, g: 0.6, b: 1, a: 1}
   femaleColor: {r: 1, g: 0.5, b: 0.7, a: 1}
+  unitData: {fileID: 0}
+  unitPrefab: {fileID: 0}
 --- !u!225 &5925171070594484934
 CanvasGroup:
   m_ObjectHideFlags: 0

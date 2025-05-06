@@ -31,6 +31,14 @@ public class UnitCardUI : MonoBehaviour
         if (cardBackground != null) cardBackground.enabled = true;
         if (unitSpriteImage != null) unitSpriteImage.enabled = true;
         if (biomassText != null) biomassText.enabled = true;
+
+        // si tu n'as pas fait drag&drop en Inspector, on récupère l'Image du root
+        if (cardBackground == null)
+            cardBackground = GetComponent<Image>();
+
+        // stocke la couleur d'origine
+        if (cardBackground != null)
+            _originalColor = cardBackground.color;
     }
 
     private IEnumerator Start()
