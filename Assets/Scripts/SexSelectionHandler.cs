@@ -5,11 +5,24 @@ public class SexSelectionHandler : MonoBehaviour, IPointerClickHandler
 {
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Right)
+        if (eventData.button != PointerEventData.InputButton.Right)
+            return;
+
+        if (SexSelectionPanel.Instance == null)
         {
-            var cardUI = GetComponent<UnitCardUI>();
-            SexSelectionPanel.Instance.Show(cardUI);
+            Debug.LogWarning("SexSelectionPanel.Instance est null ! Vérifie que tu l'as mis en scène.");
+            return;
         }
+
+        var cardUI = GetComponent<UnitCardUI>();
+        if (cardUI == null)
+        {
+            Debug.LogWarning("UnitCardUI manquant sur " + gameObject.name);
+            return;
+        }
+
+        SexSelectionPanel.Instance.Show(cardUI);
     }
 }
+
 

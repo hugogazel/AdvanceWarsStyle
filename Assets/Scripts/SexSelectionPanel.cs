@@ -5,8 +5,7 @@ public class SexSelectionPanel : MonoBehaviour
 {
     public static SexSelectionPanel Instance { get; private set; }
 
-    [Header("UI Elements")]
-    public GameObject panel;         // À désactiver par défaut
+    public GameObject panel;
     public Button maleButton;
     public Button femaleButton;
 
@@ -31,8 +30,13 @@ public class SexSelectionPanel : MonoBehaviour
 
     private void ApplySex(Sex s)
     {
+        // 1) Stocke le choix
         targetCard.unitData.sex = s;
+        // 2) Recolorie le fond
+        targetCard.ApplySexColor();
+        // 3) Ferme le panel
         panel.SetActive(false);
     }
 }
+
 

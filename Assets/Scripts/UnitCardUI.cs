@@ -5,113 +5,81 @@ using System.Collections;
 
 public class UnitCardUI : MonoBehaviour
 {
-    [Header("References to UI Elements")]
-    public Image cardBackground;      // Image d'arrière-plan du panneau de la carte
-    public Image unitSpriteImage;     // Image pour afficher le sprite de l'unité
-    public TextMeshProUGUI biomassText; // Texte pour la biomasse
+    [Header("UI Elements")]
+    public Image cardBackground;        // Le slot brun sur lequel on change la couleur
+    public Image unitSpriteImage;       // L’image de l’unité
+    public TextMeshProUGUI biomassText; // Le texte de biomasse
 
-    [Header("Sex Icon (new)")]
-    public Image sexIcon;             // Icône de sexe (à assigner en Inspector)
-    public Sprite maleSprite;         // Sprite ♂
-    public Sprite femaleSprite;       // Sprite ♀
+    [Header("Sex Colors")]
+    public Color maleColor = new Color(0.4f, 0.6f, 1f, 1f);
+    public Color femaleColor = new Color(1f, 0.5f, 0.7f, 1f);
 
-    [Header("Unit Data")]
-    public UnitData unitData;         // Données de l'unité
-    public GameObject unitPrefab;     // Prefab de l'unité (pour déploiement)
+    [HideInInspector] public UnitData unitData;     // Les données clonées ou non
+    [HideInInspector] public GameObject unitPrefab; // Le prefab à instancier en jeu
 
-    // Références internes
-    private RectTransform rectTransform;
-    private CanvasGroup canvasGroup;
-    private Canvas canvas;
+    private Color _originalColor;
 
     private void Awake()
     {
-        rectTransform = GetComponent<RectTransform>();
-        canvasGroup = GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-            canvasGroup = gameObject.AddComponent<CanvasGroup>();
-        canvas = GetComponentInParent<Canvas>();
+        // Sauvegarde de la couleur d'origine du slot
+        if (cardBackground != null)
+            _originalColor = cardBackground.color;
 
-        // Forcer l'activation de tous les composants UI
-        ForceActivateUI();
-        Debug.Log("[UnitCardUI] Awake on " + gameObject.name);
-    }
-
-    private void Start()
-    {
-        // Vérifie encore après un frame au cas où
-        StartCoroutine(ForceActivationAfterFrame());
-    }
-
-    private void ForceActivateUI()
-    {
-        // Parent Image
+        // Force l'activation immédiate des composants UI
         var parentImage = GetComponent<Image>();
-        if (parentImage != null)
-        {
-            parentImage.gameObject.SetActive(true);
-            parentImage.enabled = true;
-        }
-        // Background, Sprite, Text
-        if (cardBackground != null) { cardBackground.gameObject.SetActive(true); cardBackground.enabled = true; }
-        if (unitSpriteImage != null) { unitSpriteImage.gameObject.SetActive(true); unitSpriteImage.enabled = true; }
-        if (biomassText != null) { biomassText.gameObject.SetActive(true); biomassText.enabled = true; }
-        // Sex icon
-        if (sexIcon != null) { sexIcon.gameObject.SetActive(true); sexIcon.enabled = true; }
+        if (parentImage != null) parentImage.enabled = true;
+        if (cardBackground != null) cardBackground.enabled = true;
+        if (unitSpriteImage != null) unitSpriteImage.enabled = true;
+        if (biomassText != null) biomassText.enabled = true;
     }
 
-    private IEnumerator ForceActivationAfterFrame()
+    private IEnumerator Start()
     {
         yield return null;
-        ForceActivateUI();
-        Debug.Log($"[ForceActivationAfterFrame] UI forcée sur {gameObject.name}");
+
+        // À nouveau, on ré-obtient l'Image du parent pour la ré-activer après un frame
+        var parentImage = GetComponent<Image>();
+        if (parentImage != null) parentImage.enabled = true;
+        if (cardBackground != null) cardBackground.enabled = true;
+        if (unitSpriteImage != null) unitSpriteImage.enabled = true;
+        if (biomassText != null) biomassText.enabled = true;
     }
 
     /// <summary>
-    /// Initialise l'affichage de la carte.
+    /// Initialise la carte (fond remis à la couleur d’origine).
     /// </summary>
     public void Initialize(UnitData data)
     {
         unitData = data;
         unitPrefab = data.unitPrefab;
 
-        // Sprite
         if (unitSpriteImage != null && data.unitSprite != null)
-        {
             unitSpriteImage.sprite = data.unitSprite;
-        }
-        // Biomasse
+
         if (biomassText != null)
-        {
             biomassText.text = data.biomass.ToString();
-        }
-        // Icône de sexe
-        UpdateSexIcon();
+
+        if (cardBackground != null)
+            cardBackground.color = _originalColor;
     }
 
     /// <summary>
-    /// Met à jour l'icône de sexe d'après unitData.sex
+    /// Appelée APRÈS sélection du sexe : applique bleu ou rose.
     /// </summary>
-    public void UpdateSexIcon()
+    public void ApplySexColor()
     {
-        if (sexIcon == null) return;
+        if (cardBackground == null || unitData == null)
+            return;
 
-        switch (unitData.sex)
-        {
-            case Sex.Male:
-                sexIcon.sprite = maleSprite;
-                sexIcon.gameObject.SetActive(true);
-                break;
-            case Sex.Female:
-                sexIcon.sprite = femaleSprite;
-                sexIcon.gameObject.SetActive(true);
-                break;
-            default:
-                sexIcon.gameObject.SetActive(false);
-                break;
-        }
+        cardBackground.color =
+            (unitData.sex == Sex.Male) ? maleColor : femaleColor;
     }
 }
+
+
+
+
+
 
 
 

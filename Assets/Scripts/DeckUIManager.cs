@@ -41,8 +41,9 @@ public class DeckUIManager : MonoBehaviour
 
     private void Start()
     {
-        int p = GameManager.Instance.deckBuilderPlayer;
-        playerNameText.text = (p == 1) ? "J1" : "J2";
+        playerNameText.text =
+            GameManager.Instance.deckBuilderPlayer == 1 ? "J1" : "J2";
+
         PopulateAvailableCards();
         ClearDeckPanel();
         startGameButton.interactable = false;
@@ -54,6 +55,9 @@ public class DeckUIManager : MonoBehaviour
             Destroy(child.gameObject);
     }
 
+    /// <summary>
+    /// Cartes dispo : non colorées (restent brun).
+    /// </summary>
     public void PopulateAvailableCards()
     {
         foreach (Transform child in availableCardsContainer)
@@ -63,11 +67,15 @@ public class DeckUIManager : MonoBehaviour
         {
             var cardObj = Instantiate(cardPrefab, availableCardsContainer);
             var ui = cardObj.GetComponent<UnitCardUI>();
-            ui.Initialize(data);
+            ui.Initialize(data);                   // ← un seul paramètre
             cardObj.AddComponent<SexSelectionHandler>();
         }
     }
 
+    /// <summary>
+    /// Ajout dans le deck : clone des données, suppression clic gauche,
+    /// sélection du sexe clic droit.
+    /// </summary>
     public void AddCardToDeck(UnitData originalData)
     {
         float currentBiomass = selectedDeckCards.Sum(d => d.biomass);
@@ -80,15 +88,18 @@ public class DeckUIManager : MonoBehaviour
 
         var cardObj = Instantiate(cardPrefab, deckPanelContainer);
         var ui = cardObj.GetComponent<UnitCardUI>();
-        ui.Initialize(runtimeData);
-        cardObj.AddComponent<DeckCardRemover>();
-        cardObj.AddComponent<SexSelectionHandler>();
+        ui.Initialize(runtimeData);             // ← un seul paramètre
+
+        cardObj.AddComponent<DeckCardRemover>();      // clic gauche
+        cardObj.AddComponent<SexSelectionHandler>();  // clic droit
 
         currentBiomass += runtimeData.biomass;
         if ((selectedDeckCards.Count >= maxCardsInDeck ||
              Mathf.Approximately(currentBiomass, maxTotalBiomass))
             && startGameButton != null)
+        {
             startGameButton.interactable = true;
+        }
     }
 
     public void RemoveCardFromDeck(UnitData data)
@@ -106,11 +117,13 @@ public class DeckUIManager : MonoBehaviour
         float bm = selectedDeckCards.Sum(d => d.biomass);
         if (selectedDeckCards.Count >= maxCardsInDeck ||
             Mathf.Approximately(bm, maxTotalBiomass))
-        {
             GameManager.Instance.SubmitDeck(new List<UnitData>(selectedDeckCards));
-        }
     }
 }
+
+
+
+
 
 
 
