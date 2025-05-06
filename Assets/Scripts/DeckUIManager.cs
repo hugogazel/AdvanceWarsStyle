@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Linq;
 using System.Collections.Generic;
-using TMPro;  // nécessaire pour TextMeshProUGUI
+using TMPro;
 
 public class DeckUIManager : MonoBehaviour
 {
@@ -15,7 +15,7 @@ public class DeckUIManager : MonoBehaviour
     public Transform deckPanelContainer;
 
     [Header("Deck Data")]
-    public List<UnitData> allUnitDatas;             // Toutes les unités dispo
+    public List<UnitData> allUnitDatas;
     public List<UnitData> selectedDeckCards = new List<UnitData>();
 
     [Header("Deck Config")]
@@ -24,52 +24,28 @@ public class DeckUIManager : MonoBehaviour
 
     [Header("UI")]
     public Button startGameButton;
-
-    [Header("Player Label")]
-    public TextMeshProUGUI playerNameText;          // Ton TextMeshProUGUI
+    public TextMeshProUGUI playerNameText;
 
     private void Awake()
     {
-        // Singleton
         if (Instance != null && Instance != this)
-        {
             Destroy(gameObject);
-            return;
-        }
         Instance = this;
     }
 
     private void OnEnable()
     {
-        // Si on recharge la scène pour le joueur 2, on vide l'ancienne sélection
         if (GameManager.Instance.deckBuilderPlayer == 2)
             selectedDeckCards.Clear();
     }
 
     private void Start()
     {
-        // 1) Initialisation du label "J1" / "J2"
-        if (playerNameText == null)
-        {
-            Debug.LogError("[DeckUIManager] playerNameText n'est pas assigné !");
-        }
-        else
-        {
-            int p = GameManager.Instance.deckBuilderPlayer;
-            playerNameText.text = (p == 1) ? "J1" : "J2";
-            playerNameText.color = Color.white;
-            playerNameText.gameObject.SetActive(true);
-        }
-
-        // 2) Peupler la liste des cartes disponibles
+        int p = GameManager.Instance.deckBuilderPlayer;
+        playerNameText.text = (p == 1) ? "J1" : "J2";
         PopulateAvailableCards();
-
-        // 3) Vider l'affichage du deck (pour ne pas voir les cartes déjà sélectionnées)
         ClearDeckPanel();
-
-        // 4) Désactiver le bouton tant que le deck n'est pas complet
-        if (startGameButton != null)
-            startGameButton.interactable = false;
+        startGameButton.interactable = false;
     }
 
     private void ClearDeckPanel()
@@ -86,60 +62,57 @@ public class DeckUIManager : MonoBehaviour
         foreach (UnitData data in allUnitDatas)
         {
             var cardObj = Instantiate(cardPrefab, availableCardsContainer);
-            cardObj.GetComponent<UnitCardUI>().Initialize(data);
+            var ui = cardObj.GetComponent<UnitCardUI>();
+            ui.Initialize(data);
+            cardObj.AddComponent<SexSelectionHandler>();
         }
     }
 
-    public void AddCardToDeck(UnitData data)
+    public void AddCardToDeck(UnitData originalData)
     {
         float currentBiomass = selectedDeckCards.Sum(d => d.biomass);
-
-        if (currentBiomass + data.biomass > maxTotalBiomass) return;
+        if (currentBiomass + originalData.biomass > maxTotalBiomass) return;
         if (selectedDeckCards.Count >= maxCardsInDeck) return;
 
-        selectedDeckCards.Add(data);
-        var cardObj = Instantiate(cardPrefab, deckPanelContainer);
-        cardObj.GetComponent<UnitCardUI>().Initialize(data);
-        cardObj.AddComponent<DeckCardRemover>();
+        // Clone runtime
+        UnitData runtimeData = ScriptableObject.Instantiate(originalData);
+        selectedDeckCards.Add(runtimeData);
 
-        currentBiomass += data.biomass;
+        var cardObj = Instantiate(cardPrefab, deckPanelContainer);
+        var ui = cardObj.GetComponent<UnitCardUI>();
+        ui.Initialize(runtimeData);
+        cardObj.AddComponent<DeckCardRemover>();
+        cardObj.AddComponent<SexSelectionHandler>();
+
+        currentBiomass += runtimeData.biomass;
         if ((selectedDeckCards.Count >= maxCardsInDeck ||
              Mathf.Approximately(currentBiomass, maxTotalBiomass))
             && startGameButton != null)
-        {
             startGameButton.interactable = true;
-        }
     }
 
     public void RemoveCardFromDeck(UnitData data)
     {
         if (selectedDeckCards.Remove(data))
         {
-            float currentBiomass = selectedDeckCards.Sum(d => d.biomass);
-            if (selectedDeckCards.Count < maxCardsInDeck &&
-                currentBiomass < maxTotalBiomass &&
-                startGameButton != null)
-            {
-                startGameButton.interactable = false;
-            }
+            float bm = selectedDeckCards.Sum(d => d.biomass);
+            startGameButton.interactable =
+                !(selectedDeckCards.Count < maxCardsInDeck && bm < maxTotalBiomass);
         }
     }
 
-    /// <summary>
-    /// Appelée par le bouton Start quand le deck est plein.
-    /// Envoie la liste à GameManager qui gère J1→J2→lancement de la partie.
-    /// </summary>
     public void StartGame()
     {
-        float currentBiomass = selectedDeckCards.Sum(d => d.biomass);
-
+        float bm = selectedDeckCards.Sum(d => d.biomass);
         if (selectedDeckCards.Count >= maxCardsInDeck ||
-            Mathf.Approximately(currentBiomass, maxTotalBiomass))
+            Mathf.Approximately(bm, maxTotalBiomass))
         {
             GameManager.Instance.SubmitDeck(new List<UnitData>(selectedDeckCards));
         }
     }
 }
+
+
 
 
 

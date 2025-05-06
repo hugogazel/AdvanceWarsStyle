@@ -321,8 +321,9 @@ GameObject:
   - component: {fileID: 466027143}
   - component: {fileID: 466027145}
   - component: {fileID: 466027144}
+  - component: {fileID: 466027146}
   m_Layer: 5
-  m_Name: SexPanel
+  m_Name: SexSelectionPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -386,6 +387,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 466027142}
   m_CullTransparentMesh: 1
+--- !u!114 &466027146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 466027142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2f42176a6910224d9aa04d4a2deb84c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  panel: {fileID: 0}
+  maleButton: {fileID: 188641705}
+  femaleButton: {fileID: 948014727}
 --- !u!1 &509323226
 GameObject:
   m_ObjectHideFlags: 0
