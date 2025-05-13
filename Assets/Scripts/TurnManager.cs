@@ -45,7 +45,7 @@ public class TurnManager : MonoBehaviour
 
     private void Start()
     {
-        // Récupère les decks
+        // Récupère les decks depuis le GameManager
         player1Deck = GameManager.Instance.player1Deck;
         player2Deck = GameManager.Instance.player2Deck;
 
@@ -66,27 +66,25 @@ public class TurnManager : MonoBehaviour
             ? Team.J1Team
             : Team.J2Team;
 
-        // Affiche la main
+        // Affiche la main du joueur
         ShowPlayerHand();
 
-        // Reset des unités
+        // Reset des unités de cette équipe
         ResetUnitsForCurrentTeam();
 
-        // Prépare le texte
+        // Prépare le texte "J1 Turn" / "J2 Turn"
         playerTurnText.text = (currentTeam == Team.J1Team) ? "J1 Turn" : "J2 Turn";
 
-        // Affiche le panel de relais
+        // Affiche le panel de relais et bloque l'input
         turnChangePanel.SetActive(true);
-
-        // Bloque tout input de jeu
         GameManager.inputLocked = true;
 
-        // Marque qu'on n'a pas encore déployé
+        // Reset du flag de déploiement
         hasDeployedThisTurn = false;
     }
 
     /// <summary>
-    /// Appelé quand le joueur clique sur "I'm ready" : ferme le relais et débloque l'input.
+    /// Ferme le panel de relais et débloque l'input.
     /// </summary>
     private void OnReadyClicked()
     {
@@ -94,14 +92,30 @@ public class TurnManager : MonoBehaviour
         GameManager.inputLocked = false;
     }
 
+    /// <summary>
+    /// Affiche dans l'UI toutes les cartes du deck courant,
+    /// et applique la couleur correspondant au sexe sélectionné.
+    /// </summary>
     private void ShowPlayerHand()
     {
+        // 1) Vide le panneau
         foreach (Transform c in unitCardPanel)
             Destroy(c.gameObject);
 
-        var deck = (currentTeam == Team.J1Team) ? player1Deck : player2Deck;
+        // 2) Récupère le deck du joueur actif
+        var deck = (currentTeam == Team.J1Team)
+            ? player1Deck
+            : player2Deck;
+
+        // 3) Pour chaque carte de données, instancie et initialize l'UI
         foreach (var data in deck)
-            Instantiate(cardPrefab, unitCardPanel).GetComponent<UnitCardUI>().Initialize(data);
+        {
+            var ui = Instantiate(cardPrefab, unitCardPanel)
+                        .GetComponent<UnitCardUI>();
+            ui.Initialize(data);
+            // → applique la teinte bleu/rose selon data.sex
+            ui.ApplySexColor();
+        }
     }
 
     public void ShowEndTurnPanelOnly()
@@ -116,7 +130,7 @@ public class TurnManager : MonoBehaviour
 
     public void OnConfirmEndTurn()
     {
-        // Change le tour dans le GameManager
+        // Termine le tour dans le GameManager
         GameManager.Instance.EndTurn();
 
         // Relance un nouveau tour
@@ -126,6 +140,9 @@ public class TurnManager : MonoBehaviour
         turnEndPanel?.SetActive(false);
     }
 
+    /// <summary>
+    /// Réinitialise les unités (visuels, peut-être états) de l'équipe courante.
+    /// </summary>
     private void ResetUnitsForCurrentTeam()
     {
         foreach (var unit in FindObjectsOfType<UnitController>())
@@ -133,6 +150,7 @@ public class TurnManager : MonoBehaviour
                 unit.ResetVisuals();
     }
 }
+
 
 
 
